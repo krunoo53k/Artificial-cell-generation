@@ -4,7 +4,7 @@ from skimage.draw import random_shapes
 def generate_unconventional_blobs(num_blobs=3, shape='circle', size=100, max_size=100):
     blobs = []
     for i in range(num_blobs):
-        image, points = random_shapes((360, 363), shape, max_size=max_size, min_size=size, num_shapes=1)
+        image, points = random_shapes((360, 363), shape=shape, max_size=max_size, min_size=size, min_shapes=1, max_shapes=8)
         blobs.append(image.astype(float))
     return blobs
 
