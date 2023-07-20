@@ -4,6 +4,7 @@ from random import random
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2 as cv
+from scipy.ndimage import gaussian_filter, distance_transform_edt
 
 def convexHull(pts):    #Graham's scan.
     xleftmost, yleftmost = min(pts)
@@ -79,7 +80,7 @@ xs, ys = [interpolateSmoothly(zs, 30) for zs in zip(*pts)]
 
 # prazna slika 100 x 100
 size = 100
-img = np.zeros((size, size))
+img = np.zeros((size, size,3))
 
  
 
@@ -100,12 +101,7 @@ points = points.reshape((-1, 1, 2))
 
  
 
-cv.fillPoly(img, [points], color=255)
+cv.fillPoly(img, [points], color=(204/255, 160/255, 39/255))
 
 plt.imshow(img)
-plt.show()
-
-img2 = noisy("s&p", img)
-
-plt.imshow(img2)
 plt.show()
