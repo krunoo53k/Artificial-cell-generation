@@ -2,6 +2,8 @@ import cmath
 from math import atan2
 from random import random
 import matplotlib.pyplot as plt
+import numpy as np
+import cv2 as cv
 
 def convexHull(pts):    #Graham's scan.
     xleftmost, yleftmost = min(pts)
@@ -34,6 +36,32 @@ pts = [(random() + 0.8) * cmath.exp(2j*cmath.pi*i/7) for i in range(7)]
 pts = convexHull([(pt.real, pt.imag ) for pt in pts])
 xs, ys = [interpolateSmoothly(zs, 30) for zs in zip(*pts)]
 
-plt.plot(xs,ys)
-plt.show()
 
+
+# prazna slika 100 x 100
+size = 100
+img = np.zeros((size, size))
+
+ 
+
+# prebacivanje u koordinate
+points = np.array(list(zip(xs, ys)))
+
+# normaliziranje da bude izmedju 0 i 1
+points += 2
+print(points.min())
+points /= 2 + 2
+
+# skaliranje na velicinu slike
+points *= size
+
+# openCV format
+points = points.astype(np.int32)
+points = points.reshape((-1, 1, 2))
+
+ 
+
+cv.fillPoly(img, [points], color=255)
+
+plt.imshow(img)
+plt.show()
