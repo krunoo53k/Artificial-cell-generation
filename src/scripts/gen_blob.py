@@ -72,36 +72,29 @@ def noisy(noise_typ,image):
         noisy = image + image * gauss
         return noisy
 
-pts = [(random() + 0.8) * cmath.exp(2j*cmath.pi*i/7) for i in range(7)]
-pts = convexHull([(pt.real, pt.imag ) for pt in pts])
-xs, ys = [interpolateSmoothly(zs, 30) for zs in zip(*pts)]
+def generate_blob_image(size=100):
+    pts = [(random() + 0.8) * cmath.exp(2j*cmath.pi*i/7) for i in range(7)]
+    pts = convexHull([(pt.real, pt.imag ) for pt in pts])
+    xs, ys = [interpolateSmoothly(zs, 30) for zs in zip(*pts)]
 
+    # prazna slika size x size
+    img = np.zeros((size, size,3))
 
+    # prebacivanje u koordinate
+    points = np.array(list(zip(xs, ys)))
 
-# prazna slika 100 x 100
-size = 100
-img = np.zeros((size, size,3))
+    # normaliziranje da bude izmedju 0 i 1
+    points += 2
+    print(points.min())
+    points /= 2 + 2
 
- 
+    # skaliranje na velicinu slike
+    points *= size
 
-# prebacivanje u koordinate
-points = np.array(list(zip(xs, ys)))
+    # openCV format
+    points = points.astype(np.int32)
+    points = points.reshape((-1, 1, 2))
 
-# normaliziranje da bude izmedju 0 i 1
-points += 2
-print(points.min())
-points /= 2 + 2
-
-# skaliranje na velicinu slike
-points *= size
-
-# openCV format
-points = points.astype(np.int32)
-points = points.reshape((-1, 1, 2))
-
- 
-
-cv.fillPoly(img, [points], color=(204/255, 160/255, 39/255))
-
-plt.imshow(img)
-plt.show()
+    cv.fillPoly(img, [points], color=(204/255, 160/255, 39/255))
+    return img
+    
