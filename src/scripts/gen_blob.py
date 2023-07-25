@@ -1,10 +1,12 @@
 import cmath
 from math import atan2
 from random import random
+from random import randint
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2 as cv
 from scipy.ndimage import gaussian_filter, distance_transform_edt
+from math import pi
 
 def convexHull(pts):    #Graham's scan.
     xleftmost, yleftmost = min(pts)
@@ -21,7 +23,6 @@ def convexHull(pts):    #Graham's scan.
 
 
 def dft(xs):
-    pi = 3.14
     return [sum(x * cmath.exp(2j*pi*i*k/len(xs)) 
                 for i, x in enumerate(xs))
             for k in range(len(xs))]
@@ -74,18 +75,17 @@ def noisy(noise_typ,image):
 
 def generate_blob_image(size=100):
     pts = [(random() + 0.8) * cmath.exp(2j*cmath.pi*i/7) for i in range(7)]
-    pts = convexHull([(pt.real, pt.imag ) for pt in pts])
+    pts = convexHull([(pt.real, pt.imag) for pt in pts])
     xs, ys = [interpolateSmoothly(zs, 30) for zs in zip(*pts)]
 
     # prazna slika size x size
-    img = np.zeros((size, size,3))
+    img = np.zeros((size, size))
 
     # prebacivanje u koordinate
     points = np.array(list(zip(xs, ys)))
 
     # normaliziranje da bude izmedju 0 i 1
     points += 2
-    print(points.min())
     points /= 2 + 2
 
     # skaliranje na velicinu slike
@@ -95,6 +95,23 @@ def generate_blob_image(size=100):
     points = points.astype(np.int32)
     points = points.reshape((-1, 1, 2))
 
-    cv.fillPoly(img, [points], color=(204/255, 160/255, 39/255))
+    cv.fillPoly(img, [points], color=255)
     return img
-    
+
+def generate_background_image():
+    # prazna slika size x size
+    max_blob_size = 140
+    min_blob_size = 60
+    img = np.zeros((360 + max_blob_size, 363 + min_blob_size))
+    num_of_blobs = randint(6, 20)
+    for i in range(0, num_of_blobs):
+        size = randint(min_blob_size, max_blob_size)
+        centre_x = randint(0, 360 + max_blob_size - size)
+        centre_y = randint(0, 363 + min_blob_size - size)
+        blob = generate_blob_image(size)
+        img[centre_x:centre_x+size, centre_y:centre_y+size] = blob
+
+    return img
+
+plt.imshow(generate_background_image(), cmap="gray")
+plt.show()
