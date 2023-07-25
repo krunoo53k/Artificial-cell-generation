@@ -96,8 +96,13 @@ def generate_blob_image(size=100):
     points = points.reshape((-1, 1, 2))
 
     cv.fillPoly(img, [points], color=255)
+    
+    return transform_blob(img)
+
+def transform_blob(img):
     img2 = distance_transform_edt(img)
     img = img - img2 * randint(2, 4)
+    img = gaussian_filter(img, sigma=2)
     return img
 
 def generate_background_image():
@@ -111,11 +116,15 @@ def generate_background_image():
         centre_x = randint(0, 360 + max_blob_size - size)
         centre_y = randint(0, 363 + min_blob_size - size)
         blob = generate_blob_image(size)
-        img[centre_x:centre_x+size, centre_y:centre_y+size] = blob
+
+        # Binary mask to ignore zeros in the blob image
+        mask = (blob > 60)
+        img[centre_x:centre_x+size, centre_y:centre_y+size][mask] = blob[mask]
 
     return img
 
 background_image = generate_background_image()
 #background_image = distance_transform_edt(background_image)
-plt.imshow(generate_background_image(), cmap="Greys")
+background_image = gaussian_filter(background_image, sigma=1)
+plt.imshow(background_image, cmap="Greys")
 plt.show()
