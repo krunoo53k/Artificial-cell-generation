@@ -96,6 +96,8 @@ def generate_blob_image(size=100):
     points = points.reshape((-1, 1, 2))
 
     cv.fillPoly(img, [points], color=255)
+    img2 = distance_transform_edt(img)
+    img = img - img2 * randint(2, 4)
     return img
 
 def generate_background_image():
@@ -113,5 +115,7 @@ def generate_background_image():
 
     return img
 
-plt.imshow(generate_background_image(), cmap="gray")
+background_image = generate_background_image()
+#background_image = distance_transform_edt(background_image)
+plt.imshow(generate_background_image(), cmap="Greys")
 plt.show()
