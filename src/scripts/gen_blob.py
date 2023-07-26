@@ -109,8 +109,8 @@ def generate_background_image():
     # prazna slika size x size
     max_blob_size = 140
     min_blob_size = 60
-    img = np.zeros((360 + max_blob_size, 363 + min_blob_size))
-    num_of_blobs = randint(6, 20)
+    img = np.zeros((360 + max_blob_size, 363 + max_blob_size))
+    num_of_blobs = randint(10, 20)
     for i in range(0, num_of_blobs):
         size = randint(min_blob_size, max_blob_size)
         centre_x = randint(0, 360 + max_blob_size - size)
@@ -121,7 +121,7 @@ def generate_background_image():
         mask = (blob > 60)
         img[centre_x:centre_x+size, centre_y:centre_y+size][mask] = blob[mask]
 
-    return img
+    return img[max_blob_size::,max_blob_size::]
 
 background_image = generate_background_image()
 #background_image = distance_transform_edt(background_image)
