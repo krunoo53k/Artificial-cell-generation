@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2 as cv
 from scipy.ndimage import gaussian_filter, distance_transform_edt
+from scipy.special import comb
+from scipy.interpolate import interp1d
+
 from math import pi
 
 def convexHull(pts):    #Graham's scan.
@@ -33,6 +36,40 @@ def interpolateSmoothly(xs, N):
     half = (len(xs) + 1) // 2
     fs2 = fs[:half] + [0]*(len(fs)*N) + fs[half:]
     return [x.real / len(xs) for x in dft(fs2)[::-1]]
+
+def bernstein_poly(i, n, t):
+    """
+     The Bernstein polynomial of n, i as a function of t
+    """
+
+    return comb(n, i) * ( t**(n-i) ) * (1 - t)**i
+
+def bezier_curve(points, nTimes=1000):
+    """
+       Given a set of control points, return the
+       bezier curve defined by the control points.
+
+       points should be a list of lists, or list of tuples
+       such as [ [1,1], 
+                 [2,3], 
+                 [4,5], ..[Xn, Yn] ]
+        nTimes is the number of time steps, defaults to 1000
+
+        See http://processingjs.nihongoresources.com/bezierinfo/
+    """
+
+    nPoints = len(points)
+    xPoints = np.array([p[0] for p in points])
+    yPoints = np.array([p[1] for p in points])
+
+    t = np.linspace(0.0, 1.0, nTimes)
+
+    polynomial_array = np.array([ bernstein_poly(i, nPoints-1, t) for i in range(0, nPoints)   ])
+
+    xvals = np.dot(xPoints, polynomial_array)
+    yvals = np.dot(yPoints, polynomial_array)
+
+    return xvals, yvals
 
 def noisy(noise_typ,image):
     if noise_typ == "gauss":
@@ -76,7 +113,7 @@ def noisy(noise_typ,image):
 def generate_blob_image(size=100):
     pts = [(random() + 0.8) * cmath.exp(2j*cmath.pi*i/7) for i in range(7)]
     pts = convexHull([(pt.real, pt.imag) for pt in pts])
-    xs, ys = [interpolateSmoothly(zs, 30) for zs in zip(*pts)]
+    xs, ys = bezier_curve(pts)
 
     # prazna slika size x size
     img = np.zeros((size, size))
@@ -96,8 +133,10 @@ def generate_blob_image(size=100):
     points = points.reshape((-1, 1, 2))
 
     cv.fillPoly(img, [points], color=255)
-    
+    #plt.imshow(img, cmap="Greys")
+    #plt.show()
     return transform_blob(img)
+
 
 def transform_blob(img):
     img2 = distance_transform_edt(img)
@@ -107,8 +146,8 @@ def transform_blob(img):
 
 def generate_background_image():
     # prazna slika size x size
-    max_blob_size = 140
-    min_blob_size = 60
+    max_blob_size = 240
+    min_blob_size = 160
     img = np.zeros((360 + max_blob_size, 363 + max_blob_size))
     num_of_blobs = randint(10, 20)
     for i in range(0, num_of_blobs):
@@ -121,7 +160,11 @@ def generate_background_image():
         mask = (blob > 60)
         img[centre_x:centre_x+size, centre_y:centre_y+size][mask] = blob[mask]
 
-    return img[max_blob_size::,max_blob_size::]
+    return img
+    #return img[max_blob_size::,max_blob_size::]
+
+def add_colour(img):
+    
 
 background_image = generate_background_image()
 #background_image = distance_transform_edt(background_image)
