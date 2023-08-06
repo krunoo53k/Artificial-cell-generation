@@ -113,7 +113,7 @@ def noisy(noise_typ,image):
 def generate_blob_image(size=100):
     pts = [(random() + 0.8) * cmath.exp(2j*cmath.pi*i/7) for i in range(7)]
     pts = convexHull([(pt.real, pt.imag) for pt in pts])
-    xs, ys = bezier_curve(pts)
+    xs, ys = [interpolateSmoothly(zs, 30) for zs in zip(*pts)]
 
     # prazna slika size x size
     img = np.zeros((size, size))
@@ -146,8 +146,8 @@ def transform_blob(img):
 
 def generate_background_image():
     # prazna slika size x size
-    max_blob_size = 240
-    min_blob_size = 160
+    max_blob_size = 140
+    min_blob_size = 60
     img = np.zeros((360 + max_blob_size, 363 + max_blob_size))
     num_of_blobs = randint(10, 20)
     for i in range(0, num_of_blobs):
@@ -157,17 +157,50 @@ def generate_background_image():
         blob = generate_blob_image(size)
 
         # Binary mask to ignore zeros in the blob image
-        mask = (blob > 60)
+        mask = (blob > 30)
         img[centre_x:centre_x+size, centre_y:centre_y+size][mask] = blob[mask]
 
-    return img
-    #return img[max_blob_size::,max_blob_size::]
+    #return img
+    return img[max_blob_size::,max_blob_size::]
 
-def add_colour(img):
-    
+def add_colour(background_image, color):
+    # Expand the grayscale image to have 3 channels
+    color_image = np.stack((background_image,) * 3, axis=-1)
+
+    # Multiply each pixel value of the color image with the color value
+    result_image = color_image * color
+
+    # Clip values to [0, 255]
+    result_image = np.clip(result_image, 0, 255)
+
+    return result_image
+
+def add_background(image, color):
+    mask = np.all(image >= [209, 209, 209], axis=-1)
+    image[mask] = color
+    return image
+
+
+def invert_colors(image):
+    # Invert colors by subtracting each pixel value from 255
+    inverted_image = np.full(image.shape,255)
+    inverted_image = np.subtract(inverted_image, image)
+
+    return inverted_image
 
 background_image = generate_background_image()
-#background_image = distance_transform_edt(background_image)
 background_image = gaussian_filter(background_image, sigma=1)
-plt.imshow(background_image, cmap="Greys")
+
+# Define a static color (e.g., yellow)
+color = np.array([174/255,190/255,188/255])
+#color = np.array([204/255, 160/255, 39/255])  # Yellow
+
+# Add color to the grayscale background image
+colored_image = add_colour(background_image, color)
+print(colored_image.shape)
+colored_image = invert_colors(colored_image)
+colored_image = add_background(colored_image, np.array([100*2.2,90*2.2,80*2.2]))
+#colored_image = add_background(colored_image, np.array([0.5,0.5,0.5]))
+# Display the result
+plt.imshow(colored_image.astype(np.uint8))
 plt.show()
