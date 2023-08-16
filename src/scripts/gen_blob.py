@@ -8,8 +8,17 @@ import cv2 as cv
 from scipy.ndimage import gaussian_filter, distance_transform_edt
 from scipy.special import comb
 from scipy.interpolate import interp1d
-
+from skimage.transform import rescale
+from matplotlib.colors import LinearSegmentedColormap
+from perlin_numpy import (
+    generate_fractal_noise_2d, generate_fractal_noise_3d,
+    generate_perlin_noise_2d, generate_perlin_noise_3d
+)
 from math import pi
+
+colors = [(0.62,0.54,0.51), (0.2,0.07,0.52)] # first color is black, last is red
+cm = LinearSegmentedColormap.from_list(
+        "Custom", colors, N=20)
 
 def convexHull(pts):    #Graham's scan.
     xleftmost, yleftmost = min(pts)
@@ -135,7 +144,7 @@ def generate_blob_image(size=100):
     cv.fillPoly(img, [points], color=255)
     #plt.imshow(img, cmap="Greys")
     #plt.show()
-    return transform_blob(img)
+    return img
 
 
 def transform_blob(img):
@@ -155,6 +164,7 @@ def generate_background_image():
         centre_x = randint(0, 360 + max_blob_size - size)
         centre_y = randint(0, 363 + min_blob_size - size)
         blob = generate_blob_image(size)
+        blob = transform_blob(blob)
 
         # Binary mask to ignore zeros in the blob image
         mask = (blob > 30)
@@ -188,19 +198,44 @@ def invert_colors(image):
 
     return inverted_image
 
-background_image = generate_background_image()
-background_image = gaussian_filter(background_image, sigma=1)
+def generate_cell(size = 200):
+    img = generate_blob_image(size)
+    plt.imshow(img, cmap="Greys")
+    plt.show()
 
-# Define a static color (e.g., yellow)
-color = np.array([174/255,190/255,188/255])
-#color = np.array([204/255, 160/255, 39/255])  # Yellow
+def generate_nucleus(size = 256):
+    img = generate_blob_image(size)
+    np.random.seed(0)
+    noise = generate_fractal_noise_2d((256, 256), (8, 8), 5)
+    noise = (noise-np.min(noise))/(np.max(noise)-np.min(noise)) #normalize the noise from 0 to 1
+    # Find indices of non-zero values in img
+    nonzero_indices = np.nonzero(img)
+    
+    # Add noise only to non-zero values
+    img[nonzero_indices] = noise[nonzero_indices]
+    #img = add_colour(img, np.array([174/255,190/255,188/255]))
+    plt.imshow(img, cmap=cm)
+    plt.show()
+def generate_full_background():
+    background_image = generate_background_image()
+    background_image = gaussian_filter(background_image, sigma=1)
 
-# Add color to the grayscale background image
-colored_image = add_colour(background_image, color)
-print(colored_image.shape)
-colored_image = invert_colors(colored_image)
-colored_image = add_background(colored_image, np.array([100*2.2,90*2.2,80*2.2]))
-#colored_image = add_background(colored_image, np.array([0.5,0.5,0.5]))
-# Display the result
-plt.imshow(colored_image.astype(np.uint8))
-plt.show()
+    # Define a static color (e.g., yellow)
+    color = np.array([174/255,190/255,188/255])
+    #color = np.array([204/255, 160/255, 39/255])  # Yellow
+
+    # Add color to the grayscale background image
+    colored_image = add_colour(background_image, color)
+    print(colored_image.shape)
+    colored_image = invert_colors(colored_image)
+    colored_image = add_background(colored_image, np.array([100*2.2,90*2.2,80*2.2]))
+    #colored_image = noisy("poisson", colored_image)
+    #colored_image = add_background(colored_image, np.array([0.5,0.5,0.5]))
+    # Display the result
+    plt.figure
+    plt.imshow(colored_image.astype(np.uint8))
+    plt.show()
+    return colored_image
+
+generate_nucleus()
+np.random.seed(0)
