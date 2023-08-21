@@ -205,17 +205,29 @@ def generate_cell(size = 200):
 
 def generate_nucleus(size = 256):
     img = generate_blob_image(size)
+    blob = img.copy()
     np.random.seed(0)
     noise = generate_fractal_noise_2d((256, 256), (8, 8), 5)
     noise = (noise-np.min(noise))/(np.max(noise)-np.min(noise)) #normalize the noise from 0 to 1
     # Find indices of non-zero values in img
     nonzero_indices = np.nonzero(img)
-    
     # Add noise only to non-zero values
     img[nonzero_indices] = noise[nonzero_indices]
-    #img = add_colour(img, np.array([174/255,190/255,188/255]))
-    plt.imshow(img, cmap=cm)
-    plt.show()
+    img = cm(img)
+    print(blob.shape)
+    print(img.shape)
+    # Modify img where blob has a value of 0
+    img[blob == 0] = [0, 0, 0, 0]  # Setting background to zero
+    return img
+
+def colour_nucleus(img):
+    # make a cmap
+    return cm.jet(img)
+    mycm=plt.colors.LinearSegmentedColormap.from_list('',['#582f91', '#00aeef'])
+
+# apply on a canal
+    return mycm(img[:,:,0])
+
 def generate_full_background():
     background_image = generate_background_image()
     background_image = gaussian_filter(background_image, sigma=1)
