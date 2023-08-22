@@ -214,19 +214,9 @@ def generate_nucleus(size = 256):
     # Add noise only to non-zero values
     img[nonzero_indices] = noise[nonzero_indices]
     img = cm(img)
-    print(blob.shape)
-    print(img.shape)
     # Modify img where blob has a value of 0
     img[blob == 0] = [0, 0, 0, 0]  # Setting background to zero
     return img
-
-def colour_nucleus(img):
-    # make a cmap
-    return cm.jet(img)
-    mycm=plt.colors.LinearSegmentedColormap.from_list('',['#582f91', '#00aeef'])
-
-# apply on a canal
-    return mycm(img[:,:,0])
 
 def generate_full_background():
     background_image = generate_background_image()
@@ -249,5 +239,5 @@ def generate_full_background():
     plt.show()
     return colored_image
 
-generate_nucleus()
+image = generate_full_background()
 np.random.seed(0)
