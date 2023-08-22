@@ -146,6 +146,28 @@ def generate_blob_image(size=100):
     #plt.show()
     return img
 
+def generate_blob_image_beizer(size=100):
+    pts = [(random() + 0.8) * cmath.exp(2j*cmath.pi*i/7) for i in range(7)]
+    pts = convexHull([(pt.real, pt.imag) for pt in pts])
+    xs, ys = bezier_curve(pts)
+
+    # prazna slika size x size
+    img = np.zeros((size, size))
+    # prebacivanje u koordinate
+    points = np.array(list(zip(xs, ys)))
+    # normaliziranje da bude izmedju 0 i 1
+    points += 2
+    points /= 2 + 2
+    # skaliranje na velicinu slike
+    points *= size
+    # openCV format
+    points = points.astype(np.int32)
+    points = points.reshape((-1, 1, 2))
+    cv.fillPoly(img, [points], color=255)
+    #plt.imshow(img, cmap="Greys")
+    #plt.show()
+    return img
+
 
 def transform_blob(img):
     img2 = distance_transform_edt(img)
@@ -198,10 +220,11 @@ def invert_colors(image):
 
     return inverted_image
 
-def generate_cell(size = 200):
-    img = generate_blob_image(size)
+def generate_cell(size = 512):
+    img = generate_blob_image_beizer(size)
     plt.imshow(img, cmap="Greys")
     plt.show()
+
 
 def generate_nucleus(size = 256):
     img = generate_blob_image(size)
@@ -239,5 +262,5 @@ def generate_full_background():
     plt.show()
     return colored_image
 
-image = generate_full_background()
+generate_cell()
 np.random.seed(0)
