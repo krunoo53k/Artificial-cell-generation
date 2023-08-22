@@ -9,6 +9,7 @@ from scipy.ndimage import gaussian_filter, distance_transform_edt
 from scipy.special import comb
 from scipy.interpolate import interp1d
 from skimage.transform import rescale
+from skimage.util import random_noise
 from matplotlib.colors import LinearSegmentedColormap
 from perlin_numpy import (
     generate_fractal_noise_2d, generate_fractal_noise_3d,
@@ -221,9 +222,18 @@ def invert_colors(image):
     return inverted_image
 
 def generate_cell(size = 512):
-    img = generate_blob_image_beizer(size)
-    plt.imshow(img, cmap="Greys")
-    plt.show()
+    img = generate_blob_image(size)
+    blob = img.copy()
+    img = random_noise(img, 'pepper', amount=0.2)
+    img = gaussian_filter(img, sigma=1)
+    colors = [ (0.45,0.24,0.627), (0.83,0.79,0.73)] # first color is black, last is red
+    colourmap = LinearSegmentedColormap.from_list(
+        "Custom", colors, N=20)
+    img = colourmap(img)
+    img = img[:,:,:3] #cut alpha channel
+    # Modify img where blob has a value of 0
+    img[blob == 0] = [0, 0, 0]  # Setting background to zero
+    return img
 
 
 def generate_nucleus(size = 256):
@@ -237,6 +247,7 @@ def generate_nucleus(size = 256):
     # Add noise only to non-zero values
     img[nonzero_indices] = noise[nonzero_indices]
     img = cm(img)
+    img = img[:,:,:3] #cut alpha channel
     # Modify img where blob has a value of 0
     img[blob == 0] = [0, 0, 0, 0]  # Setting background to zero
     return img
