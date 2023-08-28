@@ -186,7 +186,7 @@ def generate_background_image():
         size = randint(min_blob_size, max_blob_size)
         centre_x = randint(0, 360 + max_blob_size - size)
         centre_y = randint(0, 363 + min_blob_size - size)
-        blob = generate_blob_image(size)
+        blob = generate_blob_image_beizer(size)
         blob = transform_blob(blob)
 
         # Binary mask to ignore zeros in the blob image
@@ -249,7 +249,8 @@ def generate_nucleus(size = 256):
     img = cm(img)
     img = img[:,:,:3] #cut alpha channel
     # Modify img where blob has a value of 0
-    img[blob == 0] = [0, 0, 0, 0]  # Setting background to zero
+    img[blob == 0] = [0, 0, 0]  # Setting background to zero
+    img = gaussian_filter(img, sigma=0.3)
     return img
 
 def generate_full_background():
@@ -273,5 +274,14 @@ def generate_full_background():
     plt.show()
     return colored_image
 
-generate_cell()
+nucleus = generate_nucleus()
+cell = generate_cell()
+cell = rescale(cell, 0.25, anti_aliasing=True, channel_axis=2)
+background = generate_full_background()
+#mask = (nucleus > 0.01)
+#cell[128:128+256, 128:128+256][mask] = nucleus[mask]
+plt.imshow(background)
+#plt.imshow(background)
+plt.show()
+
 np.random.seed(0)
