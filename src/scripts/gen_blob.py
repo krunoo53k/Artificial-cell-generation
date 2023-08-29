@@ -21,6 +21,11 @@ colors = [(0.62,0.54,0.51), (0.2,0.07,0.52)] # first color is black, last is red
 cm = LinearSegmentedColormap.from_list(
         "Custom", colors, N=20)
 
+colors = [(0.94,0.83,0.73), (0.84,0.68,0.66)] # first color is black, last is red
+cellcmap = LinearSegmentedColormap.from_list(
+        "Custom", colors, N=20)
+
+
 def convexHull(pts):    #Graham's scan.
     xleftmost, yleftmost = min(pts)
     by_theta = [(atan2(x-xleftmost, y-yleftmost), x, y) for x, y in pts]
@@ -172,9 +177,18 @@ def generate_blob_image_beizer(size=100):
 
 def transform_blob(img):
     img2 = distance_transform_edt(img)
-    img = img - img2 * randint(2, 4)
+    img = img - img2
+    img[img != 0] = (img[img != 0] - np.min(img[img != 0])) / (np.max(img[img != 0]) - np.min(img[img != 0]))
     img = gaussian_filter(img, sigma=2)
     return img
+
+def color_blob(img):
+    #grayscale_blob = img.copy()
+    img = transform_blob(img)
+    img = cellcmap(img)
+    img = img[:,:,:3] #cut alpha channel
+    # Modify img where blob has a value of 0
+    img[np.all(img == (0.94,0.83,0.73), axis=-1)] = [0, 0, 0]  # Setting background to zero
 
 def generate_background_image():
     # prazna slika size x size
@@ -265,7 +279,7 @@ def generate_full_background():
     colored_image = add_colour(background_image, color)
     print(colored_image.shape)
     colored_image = invert_colors(colored_image)
-    colored_image = add_background(colored_image, np.array([100*2.2,90*2.2,80*2.2]))
+    colored_image = add_background(colored_image, np.array([255,233,203]))
     #colored_image = noisy("poisson", colored_image)
     #colored_image = add_background(colored_image, np.array([0.5,0.5,0.5]))
     # Display the result
@@ -274,13 +288,7 @@ def generate_full_background():
     plt.show()
     return colored_image
 
-nucleus = generate_nucleus()
-cell = generate_cell()
-cell = rescale(cell, 0.25, anti_aliasing=True, channel_axis=2)
-background = generate_full_background()
-#mask = (nucleus > 0.01)
-#cell[128:128+256, 128:128+256][mask] = nucleus[mask]
-plt.imshow(background)
+color_blob(generate_blob_image())
 #plt.imshow(background)
 plt.show()
 
