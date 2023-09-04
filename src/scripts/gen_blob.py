@@ -189,26 +189,30 @@ def color_blob(img):
     img = img[:,:,:3] #cut alpha channel
     # Modify img where blob has a value of 0
     img[np.all(img == (0.94,0.83,0.73), axis=-1)] = [0, 0, 0]  # Setting background to zero
+    return img
 
 def generate_background_image():
     # prazna slika size x size
     max_blob_size = 140
     min_blob_size = 60
-    img = np.zeros((360 + max_blob_size, 363 + max_blob_size))
+    #img = np.zeros((360 + max_blob_size, 363 + max_blob_size, 3))
+    img = np.full((360 + max_blob_size, 363 + max_blob_size, 3),(0.94,0.83,0.73))
     num_of_blobs = randint(10, 20)
     for i in range(0, num_of_blobs):
         size = randint(min_blob_size, max_blob_size)
         centre_x = randint(0, 360 + max_blob_size - size)
         centre_y = randint(0, 363 + min_blob_size - size)
-        blob = generate_blob_image_beizer(size)
-        blob = transform_blob(blob)
+        blob = generate_blob_image(size)
+        blob = color_blob(blob)
 
         # Binary mask to ignore zeros in the blob image
-        mask = (blob > 30)
+        mask = np.all(blob != [0,0,0], axis=-1)
+        
         img[centre_x:centre_x+size, centre_y:centre_y+size][mask] = blob[mask]
 
+    #img = gaussian_filter(img, sigma=0.1)
     #return img
-    return img[max_blob_size::,max_blob_size::]
+    return img[max_blob_size::,max_blob_size::,::]
 
 def add_colour(background_image, color):
     # Expand the grayscale image to have 3 channels
@@ -288,8 +292,8 @@ def generate_full_background():
     plt.show()
     return colored_image
 
-color_blob(generate_blob_image())
-#plt.imshow(background)
+background = generate_background_image()
+plt.imshow(background)
 plt.show()
 
 np.random.seed(0)
