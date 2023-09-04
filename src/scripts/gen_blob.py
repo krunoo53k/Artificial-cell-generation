@@ -257,7 +257,7 @@ def generate_cell(size = 512):
 def generate_nucleus(size = 256):
     img = generate_blob_image(size)
     blob = img.copy()
-    np.random.seed(0)
+    #np.random.seed(0)
     noise = generate_fractal_noise_2d((256, 256), (8, 8), 5)
     noise = (noise-np.min(noise))/(np.max(noise)-np.min(noise)) #normalize the noise from 0 to 1
     # Find indices of non-zero values in img
@@ -292,8 +292,24 @@ def generate_full_background():
     plt.show()
     return colored_image
 
-background = generate_background_image()
-plt.imshow(background)
-plt.show()
+def generate_image():
+    cell = generate_cell()
+    nucleus = generate_nucleus()
+    #plt.imshow(cell)
+    #plt.show()
+    mask = np.all(nucleus >= [0.01,0.01,0.01], axis=-1)
+    cell[128:384,128:384][mask]=nucleus[mask]
+    cell = rescale(cell, 0.25, channel_axis=2, anti_aliasing=False)
+    print(cell.shape)
+    background = generate_background_image()
+    mask = np.all(cell >= [0.1,0.1,0.1], axis=-1)
+    background[180:308,180:308][mask]=cell[mask]
+    #background = gaussian_filter(background, sigma=0.5)
+    #print(background.shape)
+    #plt.imshow(background)
+    #plt.show()
+    return background
 
-np.random.seed(0)
+for i in range(0,10):
+    image = generate_image()
+    plt.imsave("output/image"+str(i)+".jpg",image)
