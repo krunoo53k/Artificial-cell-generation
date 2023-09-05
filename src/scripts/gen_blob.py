@@ -2,6 +2,7 @@ import cmath
 from math import atan2
 from random import random
 from random import randint
+from random import choice
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2 as cv
@@ -98,7 +99,7 @@ def noisy(noise_typ,image):
       mean = 0
       var = 0.1
       sigma = var**0.5
-      gauss = np.random.normal(mean,sigma,(row,col,ch))
+      gauss = np.normal(mean,sigma,(row,col,ch))
       gauss = gauss.reshape(row,col,ch)
       noisy = image + gauss
       return noisy
@@ -109,24 +110,24 @@ def noisy(noise_typ,image):
       out = np.copy(image)
       # Salt mode
       num_salt = np.ceil(amount * image.size * s_vs_p)
-      coords = [np.random.randint(0, i - 1, int(num_salt))
+      coords = [np.randint(0, i - 1, int(num_salt))
               for i in image.shape]
       out[coords] = 1
 
       # Pepper mode
       num_pepper = np.ceil(amount* image.size * (1. - s_vs_p))
-      coords = [np.random.randint(0, i - 1, int(num_pepper))
+      coords = [np.randint(0, i - 1, int(num_pepper))
               for i in image.shape]
       out[coords] = 0
       return out
     elif noise_typ == "poisson":
         vals = len(np.unique(image))
         vals = 2 ** np.ceil(np.log2(vals))
-        noisy = np.random.poisson(image * vals) / float(vals)
+        noisy = np.poisson(image * vals) / float(vals)
         return noisy
     elif noise_typ =="speckle":
         row,col,ch = image.shape
-        gauss = np.random.randn(row,col,ch)
+        gauss = np.randn(row,col,ch)
         gauss = gauss.reshape(row,col,ch)        
         noisy = image + image * gauss
         return noisy
@@ -265,7 +266,7 @@ def generate_cell(size = 512):
 def generate_nucleus(size = 256):
     img = generate_blob_image(size)
     blob = img.copy()
-    #np.random.seed(0)
+    #np.seed(0)
     noise = generate_fractal_noise_2d((256, 256), (8, 8), 5)
     noise = (noise-np.min(noise))/(np.max(noise)-np.min(noise)) #normalize the noise from 0 to 1
     # Find indices of non-zero values in img
@@ -370,7 +371,62 @@ def generate_images():
         counter+=1
         print("Progress: ",counter," out of 1000 images, ",counter/100,"%")
 
+def resize_blob(blob, target_size):
+    return cv.resize(blob, target_size, interpolation=cv.INTER_AREA)
+
 def generate_neutrophil_nucleus():
-    img = np.full((512,512),0)
-    plt.imshow(img)
+    padding = 0
+    img = np.full((512 + padding, 512 + padding), 0)
+    blob_size = int(256)
+    num_blobs = 4
+    
+    for _ in range(num_blobs):
+        i = np.random.randint(0, 2)
+        j = np.random.randint(0, 2)
+        blob = generate_blob_image(blob_size)
+        
+        img[blob_size * i:blob_size * (i + 1), blob_size * j:blob_size * (j + 1)] = blob
+    
+    mid_row = int(img.shape[0] / 2)
+    mid_column = int(img.shape[1] / 2)
+
+    non_zero_indices = np.where(img != 0)
+    non_zero_values = img[non_zero_indices]
+
+    # Get the bottom half of the image
+    bottom_half_indices = (non_zero_indices[0] >= mid_row)
+    bottom_half_values = non_zero_values[bottom_half_indices]
+
+    # Shift the bottom half non-zero values up by 30 pixels
+    shifted_indices = (non_zero_indices[0][bottom_half_indices] - 150, non_zero_indices[1][bottom_half_indices])
+    img[non_zero_indices[0][bottom_half_indices], non_zero_indices[1][bottom_half_indices]] = 0  # Set non-zero values to zero
+    img[shifted_indices] = bottom_half_values  # Place non-zero values in the shifted positions
+
+    non_zero_indices = np.where(img != 0)
+    non_zero_values = img[non_zero_indices]
+
+    # Get the right half of the image (you can adjust 'mid_column' accordingly)
+    right_half_indices = (non_zero_indices[1] >= mid_column)
+    right_half_values = non_zero_values[right_half_indices]
+
+    # Shift the right half non-zero values left by 30 pixels
+    shifted_indices = (non_zero_indices[0][right_half_indices], non_zero_indices[1][right_half_indices] - 150)
+    img[non_zero_indices[0][right_half_indices], non_zero_indices[1][right_half_indices]] = 0  # Set non-zero values to zero
+    img[shifted_indices] = right_half_values  # Place non-zero values in the shifted positions
+
+    zero_rows = np.all(img == 0, axis=1)
+    zero_cols = np.all(img == 0, axis=0)
+
+    # Remove zero rows and columns
+    img = img[~zero_rows][:, ~zero_cols]
+
+    plt.imshow(img, cmap="Greys")
     plt.show()
+
+
+generate_neutrophil_nucleus()
+generate_neutrophil_nucleus()
+generate_neutrophil_nucleus()
+generate_neutrophil_nucleus()
+generate_neutrophil_nucleus()
+generate_neutrophil_nucleus()
