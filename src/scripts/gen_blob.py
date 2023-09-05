@@ -1,3 +1,4 @@
+import argparse
 import cmath
 from math import atan2
 from random import random
@@ -301,16 +302,11 @@ def generate_full_background():
     plt.show()
     return colored_image
 
-def generate_image():
-    cell = generate_cell()
-    nucleus = generate_nucleus()
-    #plt.imshow(cell)
-    #plt.show()
-    mask = np.all(nucleus >= [0.01,0.01,0.01], axis=-1)
-    cell[128:384,128:384][mask]=nucleus[mask]
-    cell = rescale(cell, 0.25, channel_axis=2, anti_aliasing=False)
+def generate_neutrophil_image():
+    cell = generate_neutrophil()
     x = randint(10, 360-cell.shape[0]-10)
     y = randint(10, 363-cell.shape[1]-10)
+    print("x, y, w, h", x+cell.shape[0]/2, y+cell.shape[1]/2, cell.shape[0], cell.shape[1])
     background = generate_background_image()
     mask = np.all(cell >= [0.05,0.05,0.05], axis=-1)
     background[x:x+cell.shape[0],y:y+cell.shape[1]][mask]=cell[mask]
@@ -322,8 +318,24 @@ def generate_image():
     h = cell.shape[1]/background.shape[1]
 
     yolobbox=(y, x, w, h)
-    plt.imshow(background)
-    plt.show()
+    return background, yolobbox
+
+def generate_monocyte_image():
+    cell = generate_monocyte()
+    x = randint(10, 360-cell.shape[0]-10)
+    y = randint(10, 363-cell.shape[1]-10)
+    print("x, y, w, h", x+cell.shape[0]/2, y+cell.shape[1]/2, cell.shape[0], cell.shape[1])
+    background = generate_background_image()
+    mask = np.all(cell >= [0.05,0.05,0.05], axis=-1)
+    background[x:x+cell.shape[0],y:y+cell.shape[1]][mask]=cell[mask]
+    #background = gaussian_filter(background, sigma=0.5)
+    #print(background.shape)
+    x = (x + cell.shape[0]/2) / background.shape[1]
+    y = (y + cell.shape[1]/2) / background.shape[0]
+    w = cell.shape[0]/background.shape[0]
+    h = cell.shape[1]/background.shape[1]
+
+    yolobbox=(y, x, w, h)
     return background, yolobbox
 
 def generate_monocyte(size = 512):
@@ -355,21 +367,35 @@ def generate_monocyte(size = 512):
     mask = np.all(img != [0,0,0], axis=-1)
     underlayer[difference:img.shape[0]+difference,difference:img.shape[0]+difference][mask] = img[mask]
     underlayer = gaussian_filter(underlayer, sigma=0.5)
-    plt.imshow(underlayer)
-    plt.show()
+    
+    return underlayer
 
 
 
-def generate_images():
+def generate_neutrophil_images(count=10):
     counter = 0
-    for i in range(0,1000):
-        image, yolobox = generate_image()
+    for i in range(0,count):
+        image, yolobox = generate_neutrophil_image()
         plt.imsave("output/neutrophil/image"+str(i)+".jpg",image)
+        cv.imshow("neutrofil",image)
         file = open("output/neutrophil/image"+str(i)+".txt",'w')
         file.write("0 "+str(yolobox[0])+" "+str(yolobox[1])+ " " + str(yolobox[2])+ " " + str(yolobox[3]))
         file.close()
         counter+=1
-        print("Progress: ",counter," out of 1000 images, ",counter/100,"%")
+        print("Progress: ",counter," out of ", count, " images, ",(counter/count)*100,"%")
+
+def generate_monocyte_images(count=10):
+    counter = 0
+    for i in range(0,count):
+        image, yolobox = generate_monocyte_image()
+        plt.imsave("output/monocyte/image"+str(i)+".jpg",image, vmin=0, vmax=1)
+        plt.imshow(image)
+        plt.show()
+        file = open("output/monocyte/image"+str(i)+".txt",'w')
+        file.write("0 "+str(yolobox[0])+" "+str(yolobox[1])+ " " + str(yolobox[2])+ " " + str(yolobox[3]))
+        file.close()
+        counter+=1
+        print("Progress: ",counter," out of ", count, " images, ",(counter/count)*100,"%")
 
 def generate_neutrophil_nucleus():
     padding = 0
@@ -439,7 +465,7 @@ def color_neutrophil_nucleus(img):
 def generate_neutrophil():
     neutrophil = generate_neutrophil_nucleus()
     neutrophil = color_neutrophil_nucleus(neutrophil)
-    cell = generate_cell(800)
+    cell = generate_cell(750)
     non_zero_indices = np.where(neutrophil != 0)
 
     # Calculate the coordinates to place neutrophil in the middle of cell
@@ -459,6 +485,7 @@ def generate_neutrophil():
     return cell
 
 
-cell = generate_neutrophil()
-plt.imshow(cell)
-plt.show()
+parser = argparse.ArgumentParser(
+                    prog='Cell Generator',
+                    description='Generate neutrophil or monocyte images',
+                    epilog='Hello!')
