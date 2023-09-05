@@ -16,6 +16,7 @@ from perlin_numpy import (
     generate_perlin_noise_2d, generate_perlin_noise_3d
 )
 from math import pi
+import asyncio
 
 colors = [(0.62,0.54,0.51), (0.2,0.07,0.52)] # first color is black, last is red
 cm = LinearSegmentedColormap.from_list(
@@ -300,16 +301,24 @@ def generate_image():
     mask = np.all(nucleus >= [0.01,0.01,0.01], axis=-1)
     cell[128:384,128:384][mask]=nucleus[mask]
     cell = rescale(cell, 0.25, channel_axis=2, anti_aliasing=False)
-    print(cell.shape)
+    x = randint(10, 360-cell.shape[0]-10)
+    y = randint(10, 363-cell.shape[1]-10)
+    print("x, y", x, y)
     background = generate_background_image()
-    mask = np.all(cell >= [0.1,0.1,0.1], axis=-1)
-    background[180:308,180:308][mask]=cell[mask]
+    mask = np.all(cell >= [0.05,0.05,0.05], axis=-1)
+    print("Bekgraund: ", background.shape)
+    background[x:x+cell.shape[0],y:y+cell.shape[1]][mask]=cell[mask]
     #background = gaussian_filter(background, sigma=0.5)
     #print(background.shape)
-    #plt.imshow(background)
-    #plt.show()
+    plt.imshow(background)
+    plt.show()
     return background
 
-for i in range(0,10):
-    image = generate_image()
-    plt.imsave("output/image"+str(i)+".jpg",image)
+
+
+def generate_images():
+    for i in range(0,100):
+        image = generate_image()
+        plt.imsave("output/neutrophil/image"+str(i)+".jpg",image)
+
+generate_image()
