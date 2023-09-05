@@ -26,6 +26,11 @@ colors = [(0.94,0.83,0.73), (0.84,0.68,0.66)] # first color is black, last is re
 cellcmap = LinearSegmentedColormap.from_list(
         "Custom", colors, N=20)
 
+colors = [(0.64,0.55,0.61),(0.16,0.1,0.53)] # first color is black, last is red
+monocytecmap = LinearSegmentedColormap.from_list(
+        "Custom", colors, N=20)
+
+
 
 def convexHull(pts):    #Graham's scan.
     xleftmost, yleftmost = min(pts)
@@ -202,7 +207,7 @@ def generate_background_image():
     for i in range(0, num_of_blobs):
         size = randint(min_blob_size, max_blob_size)
         centre_x = randint(0, 360 + max_blob_size - size)
-        centre_y = randint(0, 363 + min_blob_size - size)
+        centre_y = randint(0, 363 + max_blob_size - size)
         blob = generate_blob_image(size)
         blob = color_blob(blob)
 
@@ -213,6 +218,8 @@ def generate_background_image():
 
     #img = gaussian_filter(img, sigma=0.1)
     #return img
+    #plt.imshow(img)
+    #plt.show()
     return img[max_blob_size::,max_blob_size::,::]
 
 def add_colour(background_image, color):
@@ -303,22 +310,67 @@ def generate_image():
     cell = rescale(cell, 0.25, channel_axis=2, anti_aliasing=False)
     x = randint(10, 360-cell.shape[0]-10)
     y = randint(10, 363-cell.shape[1]-10)
-    print("x, y", x, y)
     background = generate_background_image()
     mask = np.all(cell >= [0.05,0.05,0.05], axis=-1)
-    print("Bekgraund: ", background.shape)
     background[x:x+cell.shape[0],y:y+cell.shape[1]][mask]=cell[mask]
     #background = gaussian_filter(background, sigma=0.5)
     #print(background.shape)
+    x = (x + cell.shape[0]/2) / background.shape[1]
+    y = (y + cell.shape[1]/2) / background.shape[0]
+    w = cell.shape[0]/background.shape[0]
+    h = cell.shape[1]/background.shape[1]
+
+    yolobbox=(y, x, w, h)
     plt.imshow(background)
     plt.show()
-    return background
+    return background, yolobbox
+
+def generate_monocyte(size = 512):
+    img = generate_blob_image(size)
+    blob = img.copy()
+    underlayer = rescale(img, 1.25, anti_aliasing=False)
+    underlayerblob = underlayer.copy()
+    underlayer = random_noise(underlayer, 'pepper', amount=0.5)
+    underlayer = monocytecmap(underlayer)
+    underlayer = underlayer[:,:,:3]
+    underlayer[underlayerblob==0] = [0,0,0]
+    underlayer = rescale(underlayer, 0.25, channel_axis=2, anti_aliasing=False)
+    #plt.imshow(underlayer)
+    #plt.show()
+    #plt.imshow(img)
+    #plt.show()
+    img = random_noise(img, 'pepper', amount=0.2)
+    img = monocytecmap(img)
+    img = img[:,:,:3]
+    img[blob==0] = [0,0,0]
+    img = rescale(img, 0.25, channel_axis=2, anti_aliasing=False)
+    #plt.imshow(img)
+    #plt.show()
+    difference = underlayer.shape[0]-img.shape[0]
+    print(difference)
+    print(underlayer.shape)
+    print(img.shape)
+    difference = int(difference/2)
+    mask = np.all(img != [0,0,0], axis=-1)
+    underlayer[difference:img.shape[0]+difference,difference:img.shape[0]+difference][mask] = img[mask]
+    underlayer = gaussian_filter(underlayer, sigma=0.5)
+    plt.imshow(underlayer)
+    plt.show()
 
 
 
 def generate_images():
-    for i in range(0,100):
-        image = generate_image()
+    counter = 0
+    for i in range(0,1000):
+        image, yolobox = generate_image()
         plt.imsave("output/neutrophil/image"+str(i)+".jpg",image)
+        file = open("output/neutrophil/image"+str(i)+".txt",'w')
+        file.write("0 "+str(yolobox[0])+" "+str(yolobox[1])+ " " + str(yolobox[2])+ " " + str(yolobox[3]))
+        file.close()
+        counter+=1
+        print("Progress: ",counter," out of 1000 images, ",counter/100,"%")
 
-generate_image()
+def generate_neutrophil_nucleus():
+    img = np.full((512,512),0)
+    plt.imshow(img)
+    plt.show()
