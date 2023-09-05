@@ -264,7 +264,7 @@ def generate_cell(size = 512):
 
 
 def generate_nucleus(size = 256):
-    img = generate_blob_image(size)
+    img = generate_neutrophil_nucleus(size)
     blob = img.copy()
     #np.seed(0)
     noise = generate_fractal_noise_2d((256, 256), (8, 8), 5)
@@ -371,9 +371,6 @@ def generate_images():
         counter+=1
         print("Progress: ",counter," out of 1000 images, ",counter/100,"%")
 
-def resize_blob(blob, target_size):
-    return cv.resize(blob, target_size, interpolation=cv.INTER_AREA)
-
 def generate_neutrophil_nucleus():
     padding = 0
     img = np.full((512 + padding, 512 + padding), 0)
@@ -420,13 +417,48 @@ def generate_neutrophil_nucleus():
     # Remove zero rows and columns
     img = img[~zero_rows][:, ~zero_cols]
 
-    plt.imshow(img, cmap="Greys")
-    plt.show()
+    #img[img==255]=1
+
+    return img
+
+def color_neutrophil_nucleus(img):
+    blob = img.copy()
+    noise = generate_fractal_noise_2d((512, 512), (8, 8), 5)
+    # Crop the noise to match the size of img
+    noise = noise[:img.shape[0], :img.shape[1]]
+    noise = (noise-np.min(noise))/(np.max(noise)-np.min(noise)) #normalize the noise from 0 to 1
+
+    img = noise
+    img = cm(img)
+    img = img[:,:,:3] #cut alpha channel
+    # Modify img where blob has a value of 0
+    img[blob == 0] = [0, 0, 0]  # Setting background to zero
+    #img = gaussian_filter(img, sigma=0.3)
+    return img
+
+def generate_neutrophil():
+    neutrophil = generate_neutrophil_nucleus()
+    neutrophil = color_neutrophil_nucleus(neutrophil)
+    cell = generate_cell(800)
+    non_zero_indices = np.where(neutrophil != 0)
+
+    # Calculate the coordinates to place neutrophil in the middle of cell
+    cell_height, cell_width = cell.shape[:2]
+    neutrophil_height, neutrophil_width = neutrophil.shape[:2]
+    
+    y_start = (cell_height - neutrophil_height) // 2
+    y_end = y_start + neutrophil_height
+    x_start = (cell_width - neutrophil_width) // 2
+    x_end = x_start + neutrophil_width
+
+    # Copy neutrophil into the cell at the calculated coordinates
+    cell[y_start:y_end, x_start:x_end][non_zero_indices] = neutrophil[non_zero_indices]
+
+    cell = rescale(cell, 0.25, channel_axis=2, anti_aliasing=False)
+
+    return cell
 
 
-generate_neutrophil_nucleus()
-generate_neutrophil_nucleus()
-generate_neutrophil_nucleus()
-generate_neutrophil_nucleus()
-generate_neutrophil_nucleus()
-generate_neutrophil_nucleus()
+cell = generate_neutrophil()
+plt.imshow(cell)
+plt.show()
