@@ -302,8 +302,20 @@ def generate_full_background():
     plt.show()
     return colored_image
 
+def remove_null_rows_and_columns_rgb_image(img):
+    zero_rows = np.all(np.sum(img, axis=2) == 0, axis=1)
+    zero_cols = np.all(np.sum(img, axis=2) == 0, axis=0)
+
+    # Remove zero rows and columns
+    img = img[~zero_rows][:, ~zero_cols]
+    #plt.imshow(img)
+    #plt.show()
+    return img
+
+
 def generate_neutrophil_image():
     cell = generate_neutrophil()
+    cell = remove_null_rows_and_columns_rgb_image(cell)
     x = randint(10, 360-cell.shape[0]-10)
     y = randint(10, 363-cell.shape[1]-10)
     print("x, y, w, h", x+cell.shape[0]/2, y+cell.shape[1]/2, cell.shape[0], cell.shape[1])
@@ -314,17 +326,18 @@ def generate_neutrophil_image():
     #print(background.shape)
     x = (x + cell.shape[0]/2) / background.shape[1]
     y = (y + cell.shape[1]/2) / background.shape[0]
-    w = cell.shape[0]/background.shape[0]
-    h = cell.shape[1]/background.shape[1]
+    h = cell.shape[0]/background.shape[0]
+    w = cell.shape[1]/background.shape[1]
 
     yolobbox=(y, x, w, h)
     return background, yolobbox
 
 def generate_monocyte_image():
     cell = generate_monocyte()
+    cell = remove_null_rows_and_columns_rgb_image(cell)
     x = randint(10, 360-cell.shape[0]-10)
     y = randint(10, 363-cell.shape[1]-10)
-    print("x, y, w, h", x+cell.shape[0]/2, y+cell.shape[1]/2, cell.shape[0], cell.shape[1])
+    #print("x, y, w, h", x+cell.shape[0]/2, y+cell.shape[1]/2, cell.shape[0], cell.shape[1])
     background = generate_background_image()
     mask = np.all(cell >= [0.05,0.05,0.05], axis=-1)
     background[x:x+cell.shape[0],y:y+cell.shape[1]][mask]=cell[mask]
@@ -332,8 +345,8 @@ def generate_monocyte_image():
     #print(background.shape)
     x = (x + cell.shape[0]/2) / background.shape[1]
     y = (y + cell.shape[1]/2) / background.shape[0]
-    w = cell.shape[0]/background.shape[0]
-    h = cell.shape[1]/background.shape[1]
+    h = cell.shape[0]/background.shape[0]
+    w = cell.shape[1]/background.shape[1]
 
     yolobbox=(y, x, w, h)
     return background, yolobbox
@@ -360,9 +373,6 @@ def generate_monocyte(size = 512):
     #plt.imshow(img)
     #plt.show()
     difference = underlayer.shape[0]-img.shape[0]
-    print(difference)
-    print(underlayer.shape)
-    print(img.shape)
     difference = int(difference/2)
     mask = np.all(img != [0,0,0], axis=-1)
     underlayer[difference:img.shape[0]+difference,difference:img.shape[0]+difference][mask] = img[mask]
@@ -377,22 +387,20 @@ def generate_neutrophil_images(count=10):
     for i in range(0,count):
         image, yolobox = generate_neutrophil_image()
         plt.imsave("output/neutrophil/image"+str(i)+".jpg",image)
-        cv.imshow("neutrofil",image)
+        #cv.imshow("neutrofil",image)
         file = open("output/neutrophil/image"+str(i)+".txt",'w')
         file.write("0 "+str(yolobox[0])+" "+str(yolobox[1])+ " " + str(yolobox[2])+ " " + str(yolobox[3]))
         file.close()
         counter+=1
         print("Progress: ",counter," out of ", count, " images, ",(counter/count)*100,"%")
 
-def generate_monocyte_images(count=10):
+def generate_monocyte_images(count=10, start=0):
     counter = 0
-    for i in range(0,count):
+    for i in range(start,count+start):
         image, yolobox = generate_monocyte_image()
         plt.imsave("output/monocyte/image"+str(i)+".jpg",image, vmin=0, vmax=1)
-        plt.imshow(image)
-        plt.show()
         file = open("output/monocyte/image"+str(i)+".txt",'w')
-        file.write("0 "+str(yolobox[0])+" "+str(yolobox[1])+ " " + str(yolobox[2])+ " " + str(yolobox[3]))
+        file.write("1 "+str(yolobox[0])+" "+str(yolobox[1])+ " " + str(yolobox[2])+ " " + str(yolobox[3]))
         file.close()
         counter+=1
         print("Progress: ",counter," out of ", count, " images, ",(counter/count)*100,"%")
@@ -410,6 +418,8 @@ def generate_neutrophil_nucleus():
         
         img[blob_size * i:blob_size * (i + 1), blob_size * j:blob_size * (j + 1)] = blob
     
+    #plt.imshow(img, cmap="Greys")
+    #plt.show()
     mid_row = int(img.shape[0] / 2)
     mid_column = int(img.shape[1] / 2)
 
@@ -437,6 +447,8 @@ def generate_neutrophil_nucleus():
     img[non_zero_indices[0][right_half_indices], non_zero_indices[1][right_half_indices]] = 0  # Set non-zero values to zero
     img[shifted_indices] = right_half_values  # Place non-zero values in the shifted positions
 
+ #   plt.imshow(img, cmap="Greys")
+ #   plt.show()
     zero_rows = np.all(img == 0, axis=1)
     zero_cols = np.all(img == 0, axis=0)
 
@@ -450,6 +462,8 @@ def generate_neutrophil_nucleus():
 def color_neutrophil_nucleus(img):
     blob = img.copy()
     noise = generate_fractal_noise_2d((512, 512), (8, 8), 5)
+    #plt.imshow(noise, cmap="Greys")
+    #plt.show()
     # Crop the noise to match the size of img
     noise = noise[:img.shape[0], :img.shape[1]]
     noise = (noise-np.min(noise))/(np.max(noise)-np.min(noise)) #normalize the noise from 0 to 1
@@ -460,6 +474,8 @@ def color_neutrophil_nucleus(img):
     # Modify img where blob has a value of 0
     img[blob == 0] = [0, 0, 0]  # Setting background to zero
     #img = gaussian_filter(img, sigma=0.3)
+    #plt.imshow(img)
+    #plt.show()
     return img
 
 def generate_neutrophil():
@@ -489,3 +505,40 @@ parser = argparse.ArgumentParser(
                     prog='Cell Generator',
                     description='Generate neutrophil or monocyte images',
                     epilog='Hello!')
+
+"""
+parser.add_argument('-c','--count', type=int)
+parser.add_argument('-t', '--type')
+
+args = parser.parse_args()
+
+if(args.type=="monocyte" or "mono" or "mc"):
+    generate_monocyte_images(args.count)
+elif(args.type=="neutrophil" or "n", "np"):
+    generate_neutrophil_images(args.count)
+"""
+
+def generate_all_images(count=1000, count_test=300):
+    counter = 0
+    test_counter = 0
+    for i in range(0,300):
+        image, yolobox = generate_neutrophil_image()
+        plt.imsave("output/obj/img"+str(i)+".jpg",image, vmin=0, vmax=1)
+        file = open("output/obj/img"+str(i)+".txt",'w')
+        file.write("1 "+str(yolobox[0])+" "+str(yolobox[1])+ " " + str(yolobox[2])+ " " + str(yolobox[3]))
+        file.close()
+        counter+=1
+        print("Progress: ",counter," out of ", count, " images, ",(counter/count)*100,"%")
+
+    for i in range(count_test,count_test*2):
+        image, yolobox = generate_neutrophil_image()
+        plt.imsave("output/test/img"+str(i)+".jpg",image)
+        file = open("output/test/img"+str(i)+".txt",'w')
+        file.write("0 "+str(yolobox[0])+" "+str(yolobox[1])+ " " + str(yolobox[2])+ " " + str(yolobox[3]))
+        file.close()
+        test_counter+=1
+        print("Progress: ",test_counter," out of ", count_test*2, " images, ",(test_counter/count_test*2)*100,"%") 
+
+blob, yolo = generate_monocyte_image()
+plt.imshow(blob)
+plt.show()
