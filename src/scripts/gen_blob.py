@@ -1,9 +1,11 @@
+from __future__ import annotations
 import argparse
 import cmath
 from math import atan2
 from random import random
 from random import randint
 from random import choice
+from utils import *
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2 as cv
@@ -19,6 +21,9 @@ from perlin_numpy import (
 )
 from math import pi
 import asyncio
+
+from abc import ABC, abstractmethod
+from typing import List
 
 colors = [(0.62,0.54,0.51), (0.2,0.07,0.52)] # first color is black, last is red
 cm = LinearSegmentedColormap.from_list(
@@ -132,33 +137,6 @@ def noisy(noise_typ,image):
         gauss = gauss.reshape(row,col,ch)        
         noisy = image + image * gauss
         return noisy
-
-def generate_blob_image(size=100):
-    pts = [(random() + 0.8) * cmath.exp(2j*cmath.pi*i/7) for i in range(7)]
-    pts = convexHull([(pt.real, pt.imag) for pt in pts])
-    xs, ys = [interpolateSmoothly(zs, 30) for zs in zip(*pts)]
-
-    # prazna slika size x size
-    img = np.zeros((size, size))
-
-    # prebacivanje u koordinate
-    points = np.array(list(zip(xs, ys)))
-
-    # normaliziranje da bude izmedju 0 i 1
-    points += 2
-    points /= 2 + 2
-
-    # skaliranje na velicinu slike
-    points *= size
-
-    # openCV format
-    points = points.astype(np.int32)
-    points = points.reshape((-1, 1, 2))
-
-    cv.fillPoly(img, [points], color=255)
-    #plt.imshow(img, cmap="Greys")
-    #plt.show()
-    return img
 
 def generate_blob_image_beizer(size=100):
     pts = [(random() + 0.8) * cmath.exp(2j*cmath.pi*i/7) for i in range(7)]
@@ -539,6 +517,62 @@ def generate_all_images(count=1000, count_test=300):
         test_counter+=1
         print("Progress: ",test_counter," out of ", count_test*2, " images, ",(test_counter/count_test*2)*100,"%") 
 
-blob, yolo = generate_monocyte_image()
-plt.imshow(blob)
-plt.show()
+class BlobGenerationStrategy(ABC):
+    @abstractmethod
+    def generate_blob(self, size = 100):
+        print("You did not input a strategy.")
+        pass
+
+class FourierBlobGenerationStrategy(BlobGenerationStrategy):
+    def generate_blob(self, size=100):
+        pts = [(random() + 0.8) * cmath.exp(2j*cmath.pi*i/7) for i in range(7)]
+        pts = convexHull([(pt.real, pt.imag) for pt in pts])
+        xs, ys = [interpolateSmoothly(zs, 30) for zs in zip(*pts)]
+
+        # prazna slika size x size
+        img = np.zeros((size, size))
+
+        # prebacivanje u koordinate
+        points = np.array(list(zip(xs, ys)))
+
+        # normaliziranje da bude izmedju 0 i 1
+        points += 2
+        points /= 2 + 2
+
+        # skaliranje na velicinu slike
+        points *= size
+
+        # openCV format
+        points = points.astype(np.int32)
+        points = points.reshape((-1, 1, 2))
+
+        cv.fillPoly(img, [points], color=255)
+        #plt.imshow(img, cmap="Greys")
+        #plt.show()
+        return img
+
+class WBCGenerator():
+
+    def __init__(self, blobGenerationStrategy: BlobGenerationStrategy) -> None:
+        self._blobGenerationStrategy = blobGenerationStrategy
+
+    @property
+    def blobGenerationStrategy(self) -> BlobGenerationStrategy:
+        return self._blobGenerationStrategy
+
+    @blobGenerationStrategy.setter
+    def blobGenerationStrategy(self, blobGenerationStrategy: BlobGenerationStrategy) -> None:
+        self._blobGenerationStrategy = blobGenerationStrategy
+
+    def generate_image(self, size = 100) -> None:
+        img = self._blobGenerationStrategy.generate_blob(size)
+        return img
+
+        # ...
+
+if __name__ == "__main__":
+    wbc_generator = WBCGenerator(FourierBlobGenerationStrategy)
+    img = wbc_generator.generate_image(100)
+    plt.imshow(img)
+    plt.show()
+    
