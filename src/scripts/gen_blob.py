@@ -568,8 +568,6 @@ class WBCGenerator():
         img = self._blobGenerationStrategy.generate_blob(size)
         return img
 
-        # ...
-
 if __name__ == "__main__":
     wbc_generator = WBCGenerator(FourierBlobGenerationStrategy)
     img = wbc_generator.generate_image(100)
