@@ -2,3 +2,4 @@ PBC_dataset_normal_DIB/
 output/*
 diplomski
 cell-gen/
+src/scripts/__pycache__/
