@@ -3,6 +3,7 @@ import argparse
 import cmath
 from math import atan2
 from random import random
+import random
 from random import randint
 from random import choice
 from utils import *
@@ -523,6 +524,12 @@ class BlobGenerationStrategy(ABC):
         print("You did not input a strategy.")
         pass
 
+#Can put in utils
+def gaus2d(x=0, y=0, mx=0, my=0, sx=1, sy=1, theta=0):
+    x_rot = (x - mx) * np.cos(theta) - (y - my) * np.sin(theta)
+    y_rot = (x - mx) * np.sin(theta) + (y - my) * np.cos(theta)
+    return 1. / (2. * np.pi * sx * sy) * np.exp(-((x_rot**2. / (2. * sx**2.)) + (y_rot**2. / (2. * sy**2.))))
+
 class FourierBlobGenerationStrategy(BlobGenerationStrategy):
     def generate_blob(self, size=100):
         pts = [(random() + 0.8) * cmath.exp(2j*cmath.pi*i/7) for i in range(7)]
@@ -550,8 +557,27 @@ class FourierBlobGenerationStrategy(BlobGenerationStrategy):
         #plt.imshow(img, cmap="Greys")
         #plt.show()
         return img
+   
+class GaussBlobGenerationStrategy(BlobGenerationStrategy):
+    def generate_blob(self, size=128):
+        x = np.linspace(-5, 5, size)
+        y = np.linspace(-5, 5, size)
+        x, y = np.meshgrid(x, y)  # Get 2D variables instead of 1D
 
-class WBCGenerator():
+        sx=random.uniform(1,2.5)
+        sy = random.uniform(1,2.5)
+        theta = random.uniform(-2*pi,2*pi)
+
+        z = gaus2d(x, y, mx=0, my=0, sx=sx, sy=sy, theta=theta) 
+        z = (z-np.min(z))/(np.max(z)-np.min(z))
+        z[z<=0.2]=0
+        z[z!=0]=1
+        plt.imshow(z)
+        plt.show()
+        return z
+
+
+class BlobGenerator():
 
     def __init__(self, blobGenerationStrategy: BlobGenerationStrategy) -> None:
         self._blobGenerationStrategy = blobGenerationStrategy
@@ -567,10 +593,12 @@ class WBCGenerator():
     def generate_image(self, size = 100) -> None:
         img = self._blobGenerationStrategy.generate_blob(size)
         return img
+    
+#End can put in utils
 
 if __name__ == "__main__":
-    wbc_generator = WBCGenerator(FourierBlobGenerationStrategy)
-    img = wbc_generator.generate_image(100)
+    blob_generator = BlobGenerator(GaussBlobGenerationStrategy)
+    img = blob_generator.generate_image(100)
     plt.imshow(img)
     plt.show()
     
