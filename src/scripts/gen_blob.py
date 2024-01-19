@@ -178,19 +178,22 @@ def color_blob(img):
     img[np.all(img == (0.94,0.83,0.73), axis=-1)] = [0, 0, 0]  # Setting background to zero
     return img
 
-def generate_background_image():
+def generate_background_image(BloodCellGenerator:BlobGenerator):
     # prazna slika size x size
     max_blob_size = 140
     min_blob_size = 60
     #img = np.zeros((360 + max_blob_size, 363 + max_blob_size, 3))
     img = np.full((360 + max_blob_size, 363 + max_blob_size, 3),(0.94,0.83,0.73))
     num_of_blobs = randint(10, 20)
+    
     for i in range(0, num_of_blobs):
         size = randint(min_blob_size, max_blob_size)
         centre_x = randint(0, 360 + max_blob_size - size)
         centre_y = randint(0, 363 + max_blob_size - size)
-        blob = generate_blob_image(size)
+        blob = BloodCellGenerator.generate_image(size)
+        print(blob.shape)
         blob = color_blob(blob)
+        print(blob.shape)
 
         # Binary mask to ignore zeros in the blob image
         mask = np.all(blob != [0,0,0], axis=-1)
@@ -228,8 +231,8 @@ def invert_colors(image):
 
     return inverted_image
 
-def generate_cell(size = 512):
-    img = generate_blob_image(size)
+def generate_cell(CellGenStrategy : BlobGenerationStrategy, size = 512):
+    img = CellGenStrategy.generate_blob(size)
     blob = img.copy()
     img = random_noise(img, 'pepper', amount=0.2)
     img = gaussian_filter(img, sigma=1)
@@ -311,13 +314,13 @@ def generate_neutrophil_image():
     yolobbox=(y, x, w, h)
     return background, yolobbox
 
-def generate_monocyte_image():
-    cell = generate_monocyte()
+def generate_monocyte_image(MonocyteCellGenerator : BlobGenerator, BloodCellGenerator : BlobGenerator):
+    cell = generate_monocyte(MonocyteCellGenerator)
     cell = remove_null_rows_and_columns_rgb_image(cell)
     x = randint(10, 360-cell.shape[0]-10)
     y = randint(10, 363-cell.shape[1]-10)
     #print("x, y, w, h", x+cell.shape[0]/2, y+cell.shape[1]/2, cell.shape[0], cell.shape[1])
-    background = generate_background_image()
+    background = generate_background_image(BloodCellGenerator)
     mask = np.all(cell >= [0.05,0.05,0.05], axis=-1)
     background[x:x+cell.shape[0],y:y+cell.shape[1]][mask]=cell[mask]
     #background = gaussian_filter(background, sigma=0.5)
@@ -330,8 +333,8 @@ def generate_monocyte_image():
     yolobbox=(y, x, w, h)
     return background, yolobbox
 
-def generate_monocyte(size = 512):
-    img = generate_blob_image(size)
+def generate_monocyte(MonocyteCellGenerator : BlobGenerator, size = 512):
+    img = MonocyteCellGenerator.generate_image(size)
     blob = img.copy()
     underlayer = rescale(img, 1.25, anti_aliasing=False)
     underlayerblob = underlayer.copy()
@@ -384,7 +387,7 @@ def generate_monocyte_images(count=10, start=0):
         counter+=1
         print("Progress: ",counter," out of ", count, " images, ",(counter/count)*100,"%")
 
-def generate_neutrophil_nucleus():
+def generate_neutrophil_nucleus(NeutrophilBlobGen : BlobGenerator):
     padding = 0
     img = np.full((512 + padding, 512 + padding), 0)
     blob_size = int(256)
@@ -393,7 +396,7 @@ def generate_neutrophil_nucleus():
     for _ in range(num_blobs):
         i = np.random.randint(0, 2)
         j = np.random.randint(0, 2)
-        blob = generate_blob_image(blob_size)
+        blob = NeutrophilBlobGen.generate_image(blob_size)
         
         img[blob_size * i:blob_size * (i + 1), blob_size * j:blob_size * (j + 1)] = blob
     
@@ -532,7 +535,7 @@ def gaus2d(x=0, y=0, mx=0, my=0, sx=1, sy=1, theta=0):
 
 class FourierBlobGenerationStrategy(BlobGenerationStrategy):
     def generate_blob(self, size=100):
-        pts = [(random() + 0.8) * cmath.exp(2j*cmath.pi*i/7) for i in range(7)]
+        pts = [(random.random() + 0.8) * cmath.exp(2j*cmath.pi*i/7) for i in range(7)]
         pts = convexHull([(pt.real, pt.imag) for pt in pts])
         xs, ys = [interpolateSmoothly(zs, 30) for zs in zip(*pts)]
 
@@ -572,8 +575,8 @@ class GaussBlobGenerationStrategy(BlobGenerationStrategy):
         z = (z-np.min(z))/(np.max(z)-np.min(z))
         z[z<=0.2]=0
         z[z!=0]=1
-        plt.imshow(z)
-        plt.show()
+        #plt.imshow(z)
+        #plt.show()
         return z
 
 
@@ -601,4 +604,5 @@ if __name__ == "__main__":
     img = blob_generator.generate_image(100)
     plt.imshow(img)
     plt.show()
+    generate_monocyte_image(BlobGenerator(FourierBlobGenerationStrategy), BlobGenerator(GaussBlobGenerationStrategy))
     
