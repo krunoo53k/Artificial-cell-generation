@@ -539,6 +539,4 @@ def generate_all_images(count=1000, count_test=300):
         test_counter+=1
         print("Progress: ",test_counter," out of ", count_test*2, " images, ",(test_counter/count_test*2)*100,"%") 
 
-blob, yolo = generate_monocyte_image()
-plt.imshow(blob)
-plt.show()
+generate_all_images()
