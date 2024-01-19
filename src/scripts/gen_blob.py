@@ -26,15 +26,15 @@ import asyncio
 from abc import ABC, abstractmethod
 from typing import List
 
-colors = [(0.62,0.54,0.51), (0.2,0.07,0.52)] # first color is black, last is red
+colors = [(0.62,0.54,0.51), (0.2,0.07,0.52)] 
 cm = LinearSegmentedColormap.from_list(
         "Custom", colors, N=20)
 
-colors = [(0.94,0.83,0.73), (0.84,0.68,0.66)] # first color is black, last is red
+colors = [(0.94,0.83,0.73), (0.84,0.68,0.66)] 
 cellcmap = LinearSegmentedColormap.from_list(
         "Custom", colors, N=20)
 
-colors = [(0.64,0.55,0.61),(0.16,0.1,0.53)] # first color is black, last is red
+colors = [(0.64,0.55,0.61),(0.16,0.1,0.53)] 
 monocytecmap = LinearSegmentedColormap.from_list(
         "Custom", colors, N=20)
 
