@@ -3,3 +3,4 @@ output/*
 diplomski
 cell-gen/*
 src/scripts/__pycache__/*
+venv/*
