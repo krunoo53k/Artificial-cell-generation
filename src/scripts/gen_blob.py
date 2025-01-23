@@ -1,9 +1,12 @@
+from __future__ import annotations
 import argparse
 import cmath
 from math import atan2
 from random import random
+import random
 from random import randint
 from random import choice
+from utils import *
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2 as cv
@@ -213,12 +216,15 @@ def generate_background_image():
     # img = np.zeros((360 + max_blob_size, 363 + max_blob_size, 3))
     img = np.full((360 + max_blob_size, 363 + max_blob_size, 3), (0.94, 0.83, 0.73))
     num_of_blobs = randint(10, 20)
+    
     for i in range(0, num_of_blobs):
         size = randint(min_blob_size, max_blob_size)
         centre_x = randint(0, 360 + max_blob_size - size)
         centre_y = randint(0, 363 + max_blob_size - size)
-        blob = generate_blob_image(size)
+        blob = BloodCellGenerator.generate_image(size)
+        print(blob.shape)
         blob = color_blob(blob)
+        print(blob.shape)
 
         # Binary mask to ignore zeros in the blob image
         mask = np.all(blob != [0, 0, 0], axis=-1)
