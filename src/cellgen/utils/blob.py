@@ -43,18 +43,29 @@ class BlobGenerator:
     @staticmethod
     def bezier_curve(points: List[Tuple[float, float]],
                     n_times: int = 1000) -> Tuple[np.ndarray, np.ndarray]:
-        """Generate bezier curve from control points."""
-        n_points = len(points)
-        x_points = np.array([p[0] for p in points])
-        y_points = np.array([p[1] for p in points])
+        """Generate bezier curve from control points.
 
-        t = np.linspace(0.0, 1.0, n_times)
-        polynomial_array = np.array(
-            [BlobGenerator.bernstein_poly(i, n_points-1, t)
-             for i in range(0, n_points)])
+        Args:
+            points: List of (x,y) control points
+            n_times: Number of points to generate along curve
 
-        x_vals = np.dot(x_points, polynomial_array)
-        y_vals = np.dot(y_points, polynomial_array)
+        Returns:
+            Tuple of (x_values, y_values) arrays defining the curve
+        """
+        def single_bezier_point(t: float) -> Tuple[float, float]:
+            n = len(points) - 1
+            x = 0.0
+            y = 0.0
+            for i, point in enumerate(points):
+                coef = comb(n, i) * (t ** i) * ((1 - t) ** (n - i))
+                x += coef * point[0]
+                y += coef * point[1]
+            return x, y
+
+        t_points = np.linspace(0.0, 1.0, n_times)
+        curve_points = [single_bezier_point(t) for t in t_points]
+        x_vals = np.array([p[0] for p in curve_points])
+        y_vals = np.array([p[1] for p in curve_points])
 
         return x_vals, y_vals
 
