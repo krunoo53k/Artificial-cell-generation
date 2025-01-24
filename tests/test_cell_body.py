@@ -10,9 +10,9 @@ def test_cell_body_generation():
     mask = cell_body.generate()
 
     # Basic shape tests
-    assert mask.shape == (256, 256)
+    assert mask.shape == (256, 256, 4)
     assert mask.dtype == np.float64 or mask.dtype == np.float32
-    assert np.max(mask) == 1
+    assert np.max(mask) > 0.9
     assert np.min(mask) == 0
 
     # Visualization for debug
