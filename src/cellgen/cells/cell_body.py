@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 import numpy as np
-from typing import Optional
+from typing import Optional, Callable
 from ..utils.blob import BlobGenerator
 import cv2
+from scipy.ndimage import gaussian_filter
+from skimage.util import random_noise
 
 @dataclass
 class CellBodyParams:
@@ -16,8 +18,36 @@ class CellBody:
     def __init__(self, params: Optional[CellBodyParams] = None):
         self.params = params or CellBodyParams()
 
-    def generate(self) -> np.ndarray:
-        """Generate a cell body mask."""
+    def generate(self, color_strategy: Optional[Callable[[np.ndarray], np.ndarray]] = None) -> np.ndarray:
+        """Generate a cell body image with alpha channel.
+
+        Args:
+            color_strategy: Optional function that takes grayscale image and returns RGBA image
+
+        Returns:
+            np.ndarray: RGBA image with shape (height, width, 4)
+        """
+        # Generate base mask
+        mask = self._generate_mask()
+
+        # Add noise and blur
+        image = self._process_mask(mask)
+
+        # Create RGBA image
+        rgba = np.zeros((self.params.size, self.params.size, 4))
+
+        # Apply coloring if strategy provided
+        if color_strategy is not None:
+            rgba = color_strategy(image)
+        else:
+            # Default grayscale with alpha
+            rgba[..., :3] = np.stack((image,) * 3, axis=-1)
+            rgba[..., 3] = image
+
+        return rgba
+
+    def _generate_mask(self) -> np.ndarray:
+        """Generate basic cell body mask."""
         # Generate smooth blob boundary
         x_vals, y_vals = BlobGenerator.generate_smooth_blob(
             n_points=self.params.points,
@@ -43,5 +73,15 @@ class CellBody:
 
         # Fill polygon
         cv2.fillPoly(img, [points], color=1)
+
+        return img
+
+    def _process_mask(self, mask: np.ndarray) -> np.ndarray:
+        """Add noise and blur to mask."""
+        # Add noise
+        img = random_noise(mask, 'pepper', amount=self.params.noise_amount)
+
+        # Apply Gaussian blur
+        img = gaussian_filter(img, sigma=self.params.sigma)
 
         return img
