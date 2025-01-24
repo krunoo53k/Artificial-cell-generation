@@ -14,6 +14,14 @@ class CellBodyParams:
     points: int = 7
     scale: float = 0.8
 
+@dataclass
+class BoundingBox:
+    """Bounding box in YOLO format."""
+    x: float  # center x normalized
+    y: float  # center y normalized
+    width: float  # normalized
+    height: float  # normalized
+
 class CellBody:
     def __init__(self, params: Optional[CellBodyParams] = None):
         self.params = params or CellBodyParams()
@@ -85,3 +93,36 @@ class CellBody:
         img = gaussian_filter(img, sigma=self.params.sigma)
 
         return img
+
+    def get_bounding_box(self, image: np.ndarray) -> BoundingBox:
+        """Calculate bounding box for the cell.
+
+        Args:
+            image: RGBA cell image
+
+        Returns:
+            BoundingBox: Bounding box in YOLO format
+        """
+        # Use alpha channel for bounding box calculation
+        alpha = image[..., 3]
+
+        # Find non-zero pixels
+        rows = np.any(alpha > 0, axis=1)
+        cols = np.any(alpha > 0, axis=0)
+        ymin, ymax = np.where(rows)[0][[0, -1]]
+        xmin, xmax = np.where(cols)[0][[0, -1]]
+
+        # Calculate dimensions
+        height = (ymax - ymin) / image.shape[0]
+        width = (xmax - xmin) / image.shape[1]
+
+        # Calculate center points
+        x_center = (xmin + xmax) / (2 * image.shape[1])
+        y_center = (ymin + ymax) / (2 * image.shape[0])
+
+        return BoundingBox(
+            x=x_center,
+            y=y_center,
+            width=width,
+            height=height
+        )
