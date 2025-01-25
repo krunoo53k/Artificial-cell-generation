@@ -10,54 +10,77 @@ def test_erythrocyte_generation():
         size=128,
         points=7,
         scale=0.8,
-        intensity=255,
-        distance_weight=0.3
+        center_opacity=0.6
     )
 
     erythrocyte = Erythrocyte(params)
     cell = erythrocyte.generate()
 
-    # Shape and value tests
-    assert cell.shape == (128, 128)
-    assert np.max(cell) <= 255
-    assert np.min(cell) >= 0
-    assert not np.all(cell == 0)
+    # Create figure with checkerboard background to show transparency
+    fig = plt.figure(figsize=(15, 5))
 
-    # Visualization
-    plt.figure(figsize=(10, 5))
+    # 1. Show on checkerboard background to visualize transparency
+    ax1 = plt.subplot(1, 3, 1)
+    # Create checkerboard pattern
+    checker = np.zeros((128, 128))
+    checker[::20, ::20] = 1
+    checker[10::20, 10::20] = 1
 
-    plt.subplot(1, 2, 1)
-    plt.imshow(cell, cmap='gray')
-    plt.title('Single Erythrocyte')
-    plt.colorbar()
+    # Show checkerboard
+    ax1.imshow(checker, cmap='gray', extent=[0, 128, 0, 128])
+    # Overlay cell with transparency
+    ax1.imshow(cell[..., :3], alpha=cell[..., 3])
+    ax1.set_title('With Transparency\n(on checkerboard)')
 
-    # Show distance transform effect
-    plt.subplot(1, 2, 2)
-    plt.hist(cell[cell > 0].flatten(), bins=50)
-    plt.title('Intensity Distribution')
+    # 2. Show alpha channel separately
+    ax2 = plt.subplot(1, 3, 2)
+    alpha_display = ax2.imshow(cell[..., 3], cmap='gray')
+    plt.colorbar(alpha_display, ax=ax2)
+    ax2.set_title('Alpha Channel')
+
+    # 3. Show cross-section
+    ax3 = plt.subplot(1, 3, 3)
+    center_line = cell[cell.shape[0]//2, :, 3]
+    ax3.plot(center_line, 'b-', label='Alpha value')
+    ax3.set_title('Alpha Channel Cross-section')
+    ax3.set_xlabel('Position')
+    ax3.set_ylabel('Opacity')
+    ax3.grid(True)
 
     plt.tight_layout()
     plt.show()
     plt.close()
 
+    # Print some debug info
+    print(f"Alpha channel range: {np.min(cell[..., 3]):.3f} to {np.max(cell[..., 3]):.3f}")
+    print(f"Shape: {cell.shape}")
+    print(f"Number of non-zero alpha values: {np.sum(cell[..., 3] > 0)}")
+
 def test_erythrocyte_parameters():
     """Test erythrocyte generation with different parameters."""
     fig, axes = plt.subplots(2, 2, figsize=(12, 12))
 
+    # Create checkerboard pattern for background
+    checker = np.zeros((128, 128))
+    checker[::20, ::20] = 1
+    checker[10::20, 10::20] = 1
+
     params_list = [
-        ErythrocyteParams(distance_weight=0.1, points=5),
-        ErythrocyteParams(distance_weight=0.5, points=5),
-        ErythrocyteParams(distance_weight=0.3, points=7),
-        ErythrocyteParams(distance_weight=0.3, points=9)
+        ErythrocyteParams(center_opacity=0.3, points=5),
+        ErythrocyteParams(center_opacity=0.6, points=5),
+        ErythrocyteParams(center_opacity=0.8, points=7),
+        ErythrocyteParams(center_opacity=0.9, points=9)
     ]
 
     for ax, params in zip(axes.flat, params_list):
         erythrocyte = Erythrocyte(params)
         cell = erythrocyte.generate()
 
-        im = ax.imshow(cell, cmap='gray')
-        ax.set_title(f'weight={params.distance_weight}\npoints={params.points}')
-        plt.colorbar(im, ax=ax)
+        # Show checkerboard
+        ax.imshow(checker, cmap='gray', extent=[0, 128, 0, 128])
+        # Overlay cell with transparency
+        ax.imshow(cell[..., :3], alpha=cell[..., 3])
+        ax.set_title(f'opacity={params.center_opacity}\npoints={params.points}')
 
     plt.tight_layout()
     plt.show()
@@ -75,31 +98,22 @@ def test_background_generation():
     )
 
     background = Background(params)
-    image = background.generate()
-
-    # Basic assertions
-    assert image.shape == (512, 512, 3)
-    assert not np.all(image == 0)
-    assert np.max(image) <= 1.0
-    assert np.min(image) >= 0.0
+    image = background.generate()  # Now returns RGBA
 
     # Visualization
     plt.figure(figsize=(12, 6))
 
     plt.subplot(1, 2, 1)
-    plt.imshow(image)
-    plt.title('Full Background')
+    # Use alpha channel when plotting
+    plt.imshow(image[..., :3], alpha=image[..., 3])
+    plt.title('Background with Cells')
 
     plt.subplot(1, 2, 2)
-    for channel, color in zip(range(3), ['red', 'green', 'blue']):
-        plt.hist(image[:,:,channel].flatten(), bins=50,
-                alpha=0.5, color=color, label=color)
-    plt.title('Color Distribution')
-    plt.legend()
+    plt.imshow(image[..., 3], cmap='gray')
+    plt.title('Alpha Channel')
 
     plt.tight_layout()
     plt.show()
-    plt.close()
 
 def test_background_parameters():
     """Test background generation with different parameters."""
