@@ -47,9 +47,29 @@ class Erythrocyte:
         dist = distance_transform_edt(mask)
         dist = dist / dist.max()  # Normalize to [0,1]
 
-        # Create alpha channel that's more transparent in the center
-        alpha = 1.0 - (dist * self.params.center_opacity)
+        # Create donut-like alpha pattern
+        # This creates a more pronounced center depression
+        center_x = self.params.size // 2
+        center_y = self.params.size // 2
+        Y, X = np.ogrid[:self.params.size, :self.params.size]
+        dist_from_center = np.sqrt((X - center_x)**2 + (Y - center_y)**2)
+        max_dist = np.sqrt(2) * (self.params.size/2)
+        normalized_dist = dist_from_center / max_dist
+
+        # Create ring pattern
+        ring = np.sin(normalized_dist * np.pi) * mask
+
+        # Add some random variation
+        random_variation = np.random.uniform(0.8, 1.2)
+        ring = np.clip(ring * random_variation, 0, 1)
+
+        # Combine with original distance transform for natural edges
+        alpha = ring * (1.0 - (dist * self.params.center_opacity))
         alpha = mask * alpha  # Apply mask to alpha
+
+        # Add some random opacity variation
+        overall_opacity = np.random.uniform(0.7, 1.0)
+        alpha *= overall_opacity
 
         # Create RGBA image and apply cell coloring
         rgba = np.zeros((self.params.size, self.params.size, 4))
