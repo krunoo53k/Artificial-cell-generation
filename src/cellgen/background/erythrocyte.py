@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.ndimage import distance_transform_edt
 import cv2
-from ..utils.blob import BlobGenerator
+from ..utils.blob import BlobGenerator, BlobParams
 from ..utils.colormap import CellColorMaps
 
 @dataclass
@@ -27,8 +27,10 @@ class Erythrocyte:
         """
         # Generate base blob mask
         x_vals, y_vals = BlobGenerator.generate_smooth_blob(
+        BlobParams(
             n_points=self.params.points,
             scale=self.params.scale
+            )
         )
 
         # Create mask image
