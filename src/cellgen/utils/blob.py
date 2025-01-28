@@ -1,9 +1,20 @@
+from dataclasses import dataclass
 import numpy as np
 from enum import Enum
 from math import atan2, pi
 from typing import List, Tuple, Optional
 from .interpolation import InterpolationMethod, InterpolationFactory
 
+
+@dataclass
+class BlobParams:
+    """Parameters for blob generation."""
+    n_points: int = 7
+    scale: float = 0.8
+    interpolation_points: int = 30
+    min_radius: Optional[float] = None
+    max_radius: Optional[float] = None
+    interpolation_method: InterpolationMethod = InterpolationMethod.FOURIER
 
 class BlobGenerator:
     """Main blob generator class."""
@@ -27,14 +38,23 @@ class BlobGenerator:
 
     @staticmethod
     def generate_smooth_blob(
-        n_points: int = 7,
-        scale: float = 0.8,
-        interpolation_method: InterpolationMethod = InterpolationMethod.FOURIER
+        params: Optional[BlobParams] = None
     ) -> Tuple[np.ndarray, np.ndarray]:
-        """Generate smooth blob using specified interpolation method."""
+        """Generate smooth blob using specified parameters.
+
+        Args:
+            params: Blob generation parameters. If None, uses defaults.
+
+        Returns:
+            Tuple of (x_coordinates, y_coordinates)
+        """
+        params = params or BlobParams()
+
         # Generate random points in polar coordinates
-        angles = np.linspace(0, 2*pi, n_points, endpoint=False)
-        radii = np.random.uniform(0.5*scale, scale, n_points)
+        angles = np.linspace(0, 2*pi, params.n_points, endpoint=False)
+        min_r = params.min_radius or 0.5*params.scale
+        max_r = params.max_radius or params.scale
+        radii = np.random.uniform(min_r, max_r, params.n_points)
 
         # Convert to cartesian coordinates
         x = radii * np.cos(angles)
@@ -47,8 +67,8 @@ class BlobGenerator:
 
         # Get interpolator from factory
         interpolator = InterpolationFactory.create(
-            method=interpolation_method,
-            n_points=100
+            method=params.interpolation_method,
+            n_points=params.interpolation_points
         )
 
         # Interpolate x and y coordinates

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import numpy as np
 from typing import Optional, Callable
-from ..utils.blob import BlobGenerator
+from ..utils.blob import BlobGenerator, BlobParams
 import cv2
 from scipy.ndimage import gaussian_filter
 from skimage.util import random_noise
@@ -58,8 +58,11 @@ class CellBody:
         """Generate basic cell body mask."""
         # Generate smooth blob boundary
         x_vals, y_vals = BlobGenerator.generate_smooth_blob(
-            n_points=self.params.points,
-            scale=self.params.scale
+            BlobParams(
+                n_points=self.params.points,
+                scale=self.params.scale,
+                interpolation_points=100
+            )
         )
 
         # Create image mask
