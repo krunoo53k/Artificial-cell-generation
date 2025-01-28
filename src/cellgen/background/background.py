@@ -2,6 +2,8 @@ from dataclasses import dataclass
 import numpy as np
 from .erythrocyte import Erythrocyte, ErythrocyteParams
 from ..utils.colormap import CellColorMaps
+from scipy.ndimage import gaussian_filter
+from skimage.util import random_noise
 
 @dataclass
 class BackgroundParams:
@@ -12,6 +14,8 @@ class BackgroundParams:
     min_cells: int = 10
     max_cells: int = 20
     overlap: float = 0.3
+    noise_amount: float = 0.005  # Amount of salt & pepper noise
+    blur_sigma: float = 2.0     # Gaussian blur sigma
 
 class Background:
     """Generator for cell background."""
@@ -26,9 +30,22 @@ class Background:
         Returns:
             np.ndarray: RGBA background image
         """
-        # Create base RGBA image with solid background color
-        image = np.full((self.params.height, self.params.width, 4),
-                        [239/255, 211/255, 187/255, 1.0])
+        # Create base RGB image with solid background color
+        base_color = np.array([239/255, 211/255, 187/255])
+
+        # Create noisy background
+        background = np.full((self.params.height, self.params.width, 3), base_color)
+
+        # Add noise to each channel separately
+        for i in range(3):
+            channel = background[..., i]
+            noisy = random_noise(channel, mode='s&p', amount=self.params.noise_amount)
+            background[..., i] = gaussian_filter(noisy, sigma=self.params.blur_sigma)
+
+        # Convert to RGBA
+        image = np.zeros((self.params.height, self.params.width, 4))
+        image[..., :3] = background
+        image[..., 3] = 1.0  # Full alpha for background
 
         # Generate random number of cells
         n_cells = np.random.randint(self.params.min_cells, self.params.max_cells + 1)
