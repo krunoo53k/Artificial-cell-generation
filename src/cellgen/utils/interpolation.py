@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import numpy as np
+from scipy.interpolate import CubicSpline
 from enum import Enum
 from typing import List
 import cmath
@@ -7,6 +8,7 @@ from math import pi
 
 class InterpolationMethod(Enum):
     """Supported interpolation methods."""
+    SPLINE = "spline"
     FOURIER = "fourier"
 
 class InterpolationStrategy(ABC):
@@ -43,6 +45,19 @@ class FourierInterpolation(InterpolationStrategy):
         # Calculate inverse DFT and take real part
         return np.array([x.real / len(points) for x in self._dft(fs2)[::-1]])
 
+class SplineInterpolation(InterpolationStrategy):
+    """Cubic spline-based interpolation."""
+
+    def __init__(self, n_points: int = 100):
+        self.n_points = n_points
+
+    def interpolate(self, points: np.ndarray) -> np.ndarray:
+        """Interpolate using cubic spline."""
+        t = np.linspace(0, 1, len(points))
+        t_new = np.linspace(0, 1, self.n_points)
+        spline = CubicSpline(t, points, bc_type='periodic')
+        return spline(t_new)
+
 class InterpolationFactory:
     """Factory for creating interpolation strategies."""
 
@@ -59,5 +74,7 @@ class InterpolationFactory:
         """
         if method == InterpolationMethod.FOURIER:
             return FourierInterpolation(n_points)
+        elif method == InterpolationMethod.SPLINE:
+            return SplineInterpolation(n_points)
         else:
             raise ValueError(f"Unsupported interpolation method: {method}")
