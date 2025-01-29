@@ -32,8 +32,8 @@ def test_neutrophil_nucleus_generation():
             num_segments=4,
             segment_frequency=3.0,
             segment_amplitude=0.25,
-            base_thickness=0.35,
-            connection_thickness=0.1,
+            base_thickness=0.55,
+            connection_thickness=0.3,
             compactness=0.4,
             curve_randomness=0.25
         )
