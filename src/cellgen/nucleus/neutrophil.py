@@ -47,14 +47,15 @@ class NeutrophilNucleus:
                 # We're in a connection region - make it thin
                 thickness = self.params.connection_thickness
 
-            # Ensure point is within image bounds
-            x = np.clip(int(point[0]), 0, self.params.size-1)
-            y = np.clip(int(point[1]), 0, self.params.size-1)
+            # Calculate radius in pixels
+            radius = int(thickness * self.params.size * 0.1)
 
-            # Ensure radius is positive and reasonable
-            radius = max(1, int(thickness * self.params.size * 0.1))
+            # Ensure point coordinates are integers and within bounds
+            x = int(np.clip(point[0], radius, self.params.size - radius))
+            y = int(np.clip(point[1], radius, self.params.size - radius))
 
-            cv2.circle(image, (x, y), radius, 1, -1)
+            # Draw circle
+            cv2.circle(image, (x, y), max(1, radius), 1, -1)
 
         return image
 
@@ -66,25 +67,22 @@ class NeutrophilNucleus:
         # Start and end points
         points = np.zeros((num_points, 2))
 
-        # Calculate total width based on compactness
-        total_width = self.params.compactness * 0.4  # Reduce total spread
+        # Calculate center and scale
+        center = self.params.size / 2
+        scale = self.params.size * 0.8
 
         # Start and end points closer together
-        points[0] = [0.5 - total_width/2, 0.5]  # Start left-ish
-        points[-1] = [0.5 + total_width/2, 0.5]  # End right-ish
+        points[0] = [center - scale * self.params.compactness, center]
+        points[-1] = [center + scale * self.params.compactness, center]
 
         # Generate middle points with controlled randomness
         for i in range(1, num_points-1):
+            t = i / (num_points - 1)
             points[i] = [
-                0.5 - total_width/2 + total_width * (i/(num_points-1)),
-                0.5 + np.random.uniform(
-                    -self.params.curve_randomness,
-                    self.params.curve_randomness
-                ) * 0.5  # Reduce vertical spread
+                center - scale * self.params.compactness + 2 * scale * self.params.compactness * t,
+                center + scale * self.params.curve_randomness * np.random.uniform(-1, 1)
             ]
 
-        # Scale to image size
-        points *= self.params.size
         return points
 
     def _get_curve_point(self, control_points: np.ndarray, t: float) -> np.ndarray:
