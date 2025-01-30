@@ -2,6 +2,8 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.interpolate import CubicSpline
 import cv2
+from scipy.ndimage import gaussian_filter
+from skimage.util import random_noise
 
 @dataclass
 class NeutrophilNucleusParams:
@@ -103,3 +105,39 @@ class NeutrophilNucleus:
         thickness = self.params.base_thickness * (1 - normalized_dist**2)
 
         return max(self.params.connection_thickness, thickness)
+
+    def color_nucleus(self, img: np.ndarray, noise_amount: float = 0.3, sigma: float = 0.5) -> np.ndarray:
+        """Color the neutrophil nucleus with variable transparency.
+
+        Args:
+            img: Binary mask of the nucleus
+            noise_amount: Amount of salt & pepper noise (0-1)
+            sigma: Gaussian blur sigma for smoothing
+
+        Returns:
+            np.ndarray: RGBA colored nucleus
+        """
+        blob = img.copy()
+
+        # Create RGBA image
+        rgba = np.zeros((*img.shape, 4))
+
+        # Set solid color for all non-zero pixels
+        nucleus_color = np.array([0.16, 0.1, 0.53])
+        mask = blob > 0
+        rgba[mask, 0] = nucleus_color[0]
+        rgba[mask, 1] = nucleus_color[1]
+        rgba[mask, 2] = nucleus_color[2]
+
+        # Generate alpha channel with noise
+        alpha = blob.copy()
+        alpha = random_noise(alpha, mode='s&p', amount=noise_amount)
+        alpha = gaussian_filter(alpha, sigma=sigma)
+
+        # Normalize alpha values
+        alpha = (alpha - np.min(alpha)) / (np.max(alpha) - np.min(alpha))
+
+        # Apply alpha channel
+        rgba[..., 3] = alpha * mask  # Only apply alpha where blob exists
+
+        return rgba
