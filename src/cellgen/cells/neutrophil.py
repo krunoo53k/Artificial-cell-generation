@@ -17,7 +17,7 @@ class Neutrophil(Cell):
             sigma=params.sigma
         ))
 
-        self.nucleus = NeutrophilNucleus(NeutrophilNucleusParams(size=params.size))
+        self.nucleus = NeutrophilNucleus(params.nucleus_params)
 
     def _neutrophil_coloring(self, image: np.ndarray) -> np.ndarray:
         """Specific coloring strategy for neutrophils."""

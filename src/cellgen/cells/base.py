@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Tuple, Optional
 import numpy as np
+from ..nucleus.neutrophil import NeutrophilNucleusParams
 
 @dataclass
 class CellParameters:
@@ -10,6 +11,21 @@ class CellParameters:
     noise_amount: float = 0.2
     sigma: float = 1.0
     intensity: float = 255
+    nucleus_params: Optional[NeutrophilNucleusParams] = None
+
+    def __post_init__(self):
+        # Initialize default nucleus params if none provided
+        if self.nucleus_params is None:
+            self.nucleus_params = NeutrophilNucleusParams(
+                size=self.size,
+                num_segments=3,
+                segment_frequency=2.0,
+                segment_amplitude=0.3,
+                base_thickness=0.5,
+                connection_thickness=0.15,
+                compactness=0.4,
+                curve_randomness=0.2
+            )
 
 @dataclass
 class BoundingBox:
