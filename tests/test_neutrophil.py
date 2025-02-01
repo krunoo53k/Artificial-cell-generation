@@ -4,13 +4,94 @@ import matplotlib.pyplot as plt
 from cellgen.cells.neutrophil import Neutrophil
 from cellgen.cells.base import CellParameters
 from cellgen.utils.colormap import CellSolidColors
+from cellgen.nucleus.neutrophil import NeutrophilNucleusParams
+
+def test_neutrophil_nucleus_variations():
+    """Test neutrophil generation with different nucleus parameters."""
+    # Create different nucleus parameter configurations
+    nucleus_params_list = [
+        NeutrophilNucleusParams(
+            size=512,
+            num_segments=2,
+            segment_frequency=2.0,
+            segment_amplitude=0.3,
+            base_thickness=0.4,
+            compactness=0.3
+        ),
+        NeutrophilNucleusParams(
+            size=512,
+            num_segments=3,
+            segment_frequency=3.0,
+            segment_amplitude=0.4,
+            base_thickness=0.5,
+            compactness=0.4
+        ),
+        NeutrophilNucleusParams(
+            size=512,
+            num_segments=4,
+            segment_frequency=2.5,
+            segment_amplitude=0.35,
+            base_thickness=0.45,
+            compactness=0.35
+        )
+    ]
+
+    # Create cell parameters with different nucleus configurations
+    param_sets = [
+        CellParameters(
+            size=512,
+            noise_amount=0.2,
+            sigma=1.0,
+            nucleus_params=nucleus_params
+        )
+        for nucleus_params in nucleus_params_list
+    ]
+
+    # Create visualization grid
+    fig, axes = plt.subplots(2, len(param_sets), figsize=(15, 10))
+
+    for i, params in enumerate(param_sets):
+        neutrophil = Neutrophil(params)
+        cell_image = neutrophil.generate()
+
+        # Show complete cell
+        axes[0, i].imshow(cell_image[..., :3])
+        axes[0, i].set_title(f'Segments: {params.nucleus_params.num_segments}\n'
+                           f'Frequency: {params.nucleus_params.segment_frequency}')
+        axes[0, i].axis('off')
+
+        # Show on checkerboard for transparency
+        checker = np.zeros((512, 512, 3))
+        checker[::20, ::20] = 1
+        checker[10::20, 10::20] = 1
+        axes[1, i].imshow(checker)
+        axes[1, i].imshow(cell_image[..., :3], alpha=cell_image[..., 3])
+        axes[1, i].set_title(f'Base thickness: {params.nucleus_params.base_thickness}\n'
+                           f'Compactness: {params.nucleus_params.compactness}')
+        axes[1, i].axis('off')
+
+    plt.tight_layout()
+    plt.show()
 
 def test_neutrophil_complete_generation():
-    """Test complete neutrophil generation including nucleus and cell body."""
+    """Test complete neutrophil generation with specific nucleus parameters."""
+    # Create custom nucleus parameters
+    nucleus_params = NeutrophilNucleusParams(
+        size=512,
+        num_segments=3,
+        segment_frequency=2.5,
+        segment_amplitude=0.35,
+        base_thickness=0.45,
+        connection_thickness=0.2,
+        compactness=0.35,
+        curve_randomness=0.25
+    )
+
     params = CellParameters(
         size=512,
         noise_amount=0.2,
-        sigma=1.0
+        sigma=1.0,
+        nucleus_params=nucleus_params
     )
 
     neutrophil = Neutrophil(params)
@@ -57,6 +138,7 @@ def test_neutrophil_complete_generation():
     assert cell_image.shape == (512, 512, 4)  # RGBA image
     assert np.max(cell_image) <= 1.0  # Normalized values
     assert np.min(cell_image) >= 0.0
+    assert np.any(cell_image[..., 2] > 0.5)  # Check for nucleus (blue component)
 
     # Check for presence of both nucleus and cytoplasm
     # Nucleus typically has more blue component
@@ -93,6 +175,9 @@ def test_neutrophil_variations():
     plt.show()
 
 if __name__ == "__main__":
+    print("Testing nucleus variations...")
+    test_neutrophil_nucleus_variations()
+
     print("Testing complete neutrophil generation...")
     test_neutrophil_complete_generation()
 
