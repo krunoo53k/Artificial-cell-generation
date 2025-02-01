@@ -36,9 +36,11 @@ class Erythrocyte:
         # Create mask image
         mask = np.zeros((self.params.size, self.params.size))
         points = np.array(list(zip(x_vals, y_vals)))
-        points += 2  # Shift to positive range
-        points /= 4  # Normalize
-        points *= self.params.size
+
+        # Scale points to fill most of the requested size
+        points = points * (self.params.size * 0.5)  # Use 50% of size
+        points += self.params.size/2  # Center in image
+
         points = points.astype(np.int32)
         points = points.reshape((-1, 1, 2))
 
