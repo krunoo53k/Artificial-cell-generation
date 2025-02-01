@@ -26,3 +26,10 @@ class CellColorMaps:
         [(124/255, 108/255, 124/255), (195/255, 180/255, 183/255)],
         N=20
     )
+
+class CellSolidColors:
+    """Solid colors for different cells."""
+
+    MONOCYTE_CYTOPLASM = [0.451, 0.576, 0.702]
+
+    NEUTROPHIL_CYTOPLASM = [0.859, 0.745, 0.596]
