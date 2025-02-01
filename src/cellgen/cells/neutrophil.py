@@ -1,8 +1,10 @@
+from cellgen.nucleus.neutrophil import NeutrophilNucleus
 from .base import Cell, CellParameters, BoundingBox
 from .cell_body import CellBody, CellBodyParams
 from ..utils.colormap import CellSolidColors
 import numpy as np
 from typing import Tuple
+from src.cellgen.nucleus.neutrophil import NeutrophilNucleusParams
 
 class Neutrophil(Cell):
     """Neutrophil cell generator."""
@@ -14,6 +16,8 @@ class Neutrophil(Cell):
             noise_amount=params.noise_amount,
             sigma=params.sigma
         ))
+
+        self.nucleus = NeutrophilNucleus(NeutrophilNucleusParams(size=params.size))
 
     def _neutrophil_coloring(self, image: np.ndarray) -> np.ndarray:
         """Specific coloring strategy for neutrophils."""
@@ -32,10 +36,18 @@ class Neutrophil(Cell):
         return rgba
 
     def generate(self) -> np.ndarray:
-        """Generate neutrophil cell image."""
+        """Generate complete neutrophil cell image."""
         # Generate cell body with neutrophil-specific coloring
         cell_image = self.cell_body.generate(color_strategy=self._neutrophil_coloring)
-        return cell_image
+
+        # Generate nucleus
+        nucleus_mask = self.nucleus.generate()
+        nucleus_rgba = self.nucleus.color_nucleus(nucleus_mask)
+
+        # Combine layers
+        combined = self.combine_nucleus_and_cell_body(nucleus_rgba, cell_image)
+
+        return combined
 
     def get_name(self) -> str:
         return "neutrophil"
