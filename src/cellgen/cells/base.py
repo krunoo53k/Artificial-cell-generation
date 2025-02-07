@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Tuple, Optional
 import numpy as np
 from ..nucleus.neutrophil import NeutrophilNucleusParams
+import cv2
 
 @dataclass
 class CellParameters:
@@ -90,5 +91,59 @@ class Cell(ABC):
 
         # Combine alpha channels
         result[..., 3] = alpha_nucleus[..., 0] + alpha_cell[..., 0] * (1 - alpha_nucleus[..., 0])
+
+        return result
+
+    def fit_nucleus_to_cell_body(self, nucleus_rgba: np.ndarray, cell_body_rgba: np.ndarray,
+                                padding: float = 0.0) -> np.ndarray:  # Reduced padding from 0.1 to 0.05
+        """Fits nucleus within cell body boundaries with padding."""
+        # Get cell body mask from alpha channel
+        cell_mask = cell_body_rgba[..., 3] > 0
+        nucleus_mask = nucleus_rgba[..., 3] > 0
+
+        # Find cell body boundaries
+        cell_rows = np.any(cell_mask, axis=1)
+        cell_cols = np.any(cell_mask, axis=0)
+        cell_top, cell_bottom = np.where(cell_rows)[0][[0, -1]]
+        cell_left, cell_right = np.where(cell_cols)[0][[0, -1]]
+
+        # Calculate available space in cell (with padding)
+        cell_height = cell_bottom - cell_top
+        cell_width = cell_right - cell_left
+
+        # Increase available space by using a larger fraction of the cell
+        size_factor = 0.8  # This controls how much of the cell the nucleus can occupy
+        available_height = int(cell_height * size_factor)
+        available_width = int(cell_width * size_factor)
+
+        # Resize nucleus to fit available space
+        # Use the smaller dimension to maintain aspect ratio
+        aspect_ratio = nucleus_rgba.shape[1] / nucleus_rgba.shape[0]
+        if available_height * aspect_ratio <= available_width:
+            # Height is the limiting factor
+            new_height = available_height
+            new_width = int(available_height * aspect_ratio)
+        else:
+            # Width is the limiting factor
+            new_width = available_width
+            new_height = int(available_width / aspect_ratio)
+
+        # Resize nucleus
+        nucleus_rgba = cv2.resize(nucleus_rgba, (new_width, new_height))
+
+        # Create output image same size as cell body
+        result = np.zeros_like(cell_body_rgba)
+
+        # Calculate centered position
+        y_start = cell_top + (cell_height - new_height) // 2
+        x_start = cell_left + (cell_width - new_width) // 2
+
+        # Ensure coordinates are integers
+        y_start = int(y_start)
+        x_start = int(x_start)
+
+        # Place nucleus
+        result[y_start:y_start + new_height,
+               x_start:x_start + new_width] = nucleus_rgba
 
         return result

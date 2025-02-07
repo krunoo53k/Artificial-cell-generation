@@ -36,16 +36,19 @@ class Neutrophil(Cell):
         return rgba
 
     def generate(self) -> np.ndarray:
-        """Generate complete neutrophil cell image."""
-        # Generate cell body with neutrophil-specific coloring
-        cell_image = self.cell_body.generate(color_strategy=self._neutrophil_coloring)
+        """Generate cell image."""
+        # Generate cell body
+        cell_body_rgba = self.cell_body.generate(color_strategy=self._neutrophil_coloring)
 
         # Generate nucleus
         nucleus_mask = self.nucleus.generate()
         nucleus_rgba = self.nucleus.color_nucleus(nucleus_mask)
 
+        # Fit nucleus within cell body
+        fitted_nucleus = self.fit_nucleus_to_cell_body(nucleus_rgba, cell_body_rgba)
+
         # Combine layers
-        combined = self.combine_nucleus_and_cell_body(nucleus_rgba, cell_image)
+        combined = self.combine_nucleus_and_cell_body(fitted_nucleus, cell_body_rgba)
 
         return combined
 
