@@ -12,7 +12,7 @@ class CellBodyParams:
     noise_amount: float = 0.2
     sigma: float = 1.0
     points: int = 7
-    scale: float = 0.8
+    scale: float = 1.8
 
 @dataclass
 class BoundingBox:
