@@ -4,7 +4,7 @@ from .cell_body import CellBody, CellBodyParams
 from ..utils.colormap import CellSolidColors
 import numpy as np
 from typing import Tuple
-from src.cellgen.nucleus.neutrophil import NeutrophilNucleusParams
+from ..nucleus.neutrophil import NeutrophilNucleusParams
 
 class Neutrophil(Cell):
     """Neutrophil cell generator."""
