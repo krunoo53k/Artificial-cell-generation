@@ -70,5 +70,5 @@ if __name__ == "__main__":
     generate_dataset(
         output_dir="output/dataset_v1",
         num_images=100,
-        cell_types=["neutrophil"]
+        cell_types=["neutrophil", "monocyte"]
     )
