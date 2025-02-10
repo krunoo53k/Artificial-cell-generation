@@ -8,6 +8,7 @@ from cellgen.background import BackgroundParams
 from cellgen.cells.base import CellParameters
 import multiprocessing
 from functools import partial
+from tqdm import tqdm
 
 def generate_single_image(i, output_path, cell_types):
     """Generate a single image with its annotation"""
@@ -31,7 +32,7 @@ def generate_single_image(i, output_path, cell_types):
         class_id = 0 if cell_type == "neutrophil" else 1
         f.write(f"{class_id} {' '.join(map(str, bbox))}")
 
-    print(f"Generated image {i+1}")
+    return i  # Return something to track progress
 
 def generate_dataset(
     output_dir: str,
@@ -52,9 +53,14 @@ def generate_dataset(
                           output_path=output_path,
                           cell_types=cell_types)
 
-    # Use multiprocessing pool
+    # Use multiprocessing pool with tqdm progress bar
     with multiprocessing.Pool() as pool:
-        pool.map(generate_func, range(num_images))
+        list(tqdm(
+            pool.imap(generate_func, range(num_images)),
+            total=num_images,
+            desc="Generating images",
+            unit="image"
+        ))
 
 if __name__ == "__main__":
     # Generate a test dataset
