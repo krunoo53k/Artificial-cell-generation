@@ -15,6 +15,10 @@ class CellPlacement:
         cell_params: Optional[CellParameters] = None
     ) -> Tuple[np.ndarray, Tuple[float, float, float, float]]:
         """Generate a white blood cell on background and return YOLO format bounding box."""
+        # Define final crop dimensions
+        CROP_HEIGHT = 360
+        CROP_WIDTH = 363
+
         # Use provided params or defaults
         bg_params = background_params or BackgroundParams(
             width=512,
@@ -34,13 +38,25 @@ class CellPlacement:
         else:
             raise ValueError(f"Unsupported cell type: {cell_type}")
 
+        # Calculate crop region
+        start_y = (background.shape[0] - CROP_HEIGHT) // 2
+        start_x = (background.shape[1] - CROP_WIDTH) // 2
+        end_y = start_y + CROP_HEIGHT
+        end_x = start_x + CROP_WIDTH
+
         # Get cell dimensions
         cell_height, cell_width = cell.shape[:2]
 
-        # Calculate random position for cell
-        padding = 20
-        x = np.random.randint(padding, background.shape[1] - cell_width - padding)
-        y = np.random.randint(padding, background.shape[0] - cell_height - padding)
+        # Calculate random position within crop region
+        padding = 10  # Minimum distance from edges
+        x = np.random.randint(
+            start_x + padding,
+            end_x - cell_width - padding
+        )
+        y = np.random.randint(
+            start_y + padding,
+            end_y - cell_height - padding
+        )
 
         # Create mask for non-zero pixels
         mask = cell[..., 3] > 0.1
@@ -51,21 +67,13 @@ class CellPlacement:
                 cell[..., c][mask] * cell[..., 3][mask] + \
                 background[y:y+cell_height, x:x+cell_width, c][mask] * (1 - cell[..., 3][mask])
 
-        # Calculate initial bounding box
-        x_center = (x + cell_width/2) / background.shape[1]
-        y_center = (y + cell_height/2) / background.shape[0]
-        width = cell_width / background.shape[1]
-        height = cell_height / background.shape[0]
+        # Crop image
+        cropped = background[start_y:end_y, start_x:end_x]
 
-        # Crop to 360x363 from center
-        start_y = (background.shape[0] - 360) // 2
-        start_x = (background.shape[1] - 363) // 2
-        cropped = background[start_y:start_y+360, start_x:start_x+363]
-
-        # Adjust bounding box for cropped image
-        x_center = (x_center * background.shape[1] - start_x) / 363
-        y_center = (y_center * background.shape[0] - start_y) / 360
-        width = width * background.shape[1] / 363
-        height = height * background.shape[0] / 360
+        # Calculate bounding box relative to cropped image
+        x_center = (x - start_x + cell_width/2) / CROP_WIDTH
+        y_center = (y - start_y + cell_height/2) / CROP_HEIGHT
+        width = cell_width / CROP_WIDTH
+        height = cell_height / CROP_HEIGHT
 
         return cropped, (x_center, y_center, width, height)
