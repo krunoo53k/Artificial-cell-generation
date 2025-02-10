@@ -12,6 +12,9 @@ from tqdm import tqdm
 
 def generate_single_image(i, output_path, cell_types):
     """Generate a single image with its annotation"""
+    # Set a unique seed for each process based on the image index
+    np.random.seed(i + int.from_bytes(os.urandom(4), byteorder='little'))
+
     images_dir = output_path / "images"
     labels_dir = output_path / "labels"
 
