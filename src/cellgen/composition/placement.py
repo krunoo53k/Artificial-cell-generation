@@ -4,6 +4,7 @@ from ..background import Background, BackgroundParams
 from ..cells.neutrophil import Neutrophil
 from ..cells.monocyte import Monocyte
 from ..cells.base import CellParameters
+from cv2 import resize
 
 class CellPlacement:
     """Handles placement of cells on backgrounds."""
@@ -43,6 +44,9 @@ class CellPlacement:
         start_x = (background.shape[1] - CROP_WIDTH) // 2
         end_y = start_y + CROP_HEIGHT
         end_x = start_x + CROP_WIDTH
+
+        # Resize a higher resolution cell image using cv2
+        cell = resize(cell, (128, 128))
 
         # Get cell dimensions
         cell_height, cell_width = cell.shape[:2]
