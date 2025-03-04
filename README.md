@@ -28,15 +28,15 @@ Bear in mind that this repo is still in its' early phases and was made with the 
     # source venv/bin/activate # On Linux/macOS
     ```
 2.  **Install dependencies:**
-    Install the required Python packages using `setup.cfg`. Navigate to the project root directory in your terminal and run:
-    ```bash
-    pip install -e .
+    Install the required Python packages for development using `dev.txt`. Navigate to the project root directory in your terminal and run:
+    ```cmd
+    pip install -r .\requirements\dev.txt
     ```
-    or
-    ```bash
-    pip install .
+    or if you prefer to install only the base packages
+    ```cmd
+    pip install -r .\requirements\base.txt
     ```
-    These commands will install the dependencies listed in `setup.cfg`. The project is developed using Python 3.11.1, but newer versions should also work.
+    These commands will install the dependencies listed in their respective requirements text files. The project is developed using Python 3.11.1, but newer versions should also work.
 3.  **Run example scripts:**
     The example scripts are located in the `examples/` directory. 
     - To run the single-process dataset generation script (`generate_dataset.py`), navigate to the project root directory in your terminal and execute it using Python:
