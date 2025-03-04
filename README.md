@@ -16,11 +16,42 @@ So, what exactly is the purpose of this repository? Firstly, a proof of concept,
 Bear in mind that this repo is still in its' early phases and was made with the mentality of results first, readability second since it was a project for a master thesis. I will try to make the effort to clean up messes I've made, but no promises. In the meantime, if you want to help, scroll down to the contribute page section.
 # How to run
 
-Install all the dependencies from requirements.txt file in the repository. I **highly** recommend usage of *virtual enviroments* to have a clean install. The Python version used in the project is 3.11.1, but newer Python version *should* be fine since this project mainly relies on numpy and OpenCV.  
-After that, run the gen_blob.py script and that's it. Edit the script to your preferences or needs.
+1.  **Set up a virtual environment (recommended):**
+    It is highly recommended to use a virtual environment to isolate project dependencies. If you don't have `virtualenv` installed, you can install it using pip:
+    ```bash
+    pip install virtualenv
+    ```
+    Then, create and activate a virtual environment in the project directory:
+    ```bash
+    virtualenv venv
+    venv\Scripts\activate  # On Windows
+    # source venv/bin/activate # On Linux/macOS
+    ```
+2.  **Install dependencies:**
+    Install the required Python packages using `setup.cfg`. Navigate to the project root directory in your terminal and run:
+    ```bash
+    pip install -e .
+    ```
+    or
+    ```bash
+    pip install .
+    ```
+    These commands will install the dependencies listed in `setup.cfg`. The project is developed using Python 3.11.1, but newer versions should also work.
+3.  **Run example scripts:**
+    The example scripts are located in the `examples/` directory. 
+    - To run the single-process dataset generation script (`generate_dataset.py`), navigate to the project root directory in your terminal and execute it using Python:
+    ```bash
+    python examples/generate_dataset.py
+    ```
+    - To run the multi-process dataset generation script (`generate_dataset_multiprocess.py`), which utilizes multiple CPU cores and includes a progress bar, navigate to the project root directory in your terminal and execute it using Python:
+    ```bash
+    python examples/generate_dataset_multiprocess.py
+    ```
+4.  **Edit scripts:**
+    You can modify the example scripts in the `examples/` directory to adjust parameters like image size, number of cells, cell types, etc., according to your needs. Open the scripts in a text editor or IDE to make changes.
+
+After following these steps, you should be able to run the example scripts and generate artificial cell images.
 
 # Contributing
 
 Contribution is welcome in any form, be it bug reports, pull requests or general knowledge and advices. If you'd like to help, but don't know how, take a peek at the issues page, I'll open issues for features I'd like to implement and refactor.
-
-
