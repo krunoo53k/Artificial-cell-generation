@@ -8,6 +8,9 @@ on:
     branches:
       - development
 
+permissions:
+  checks: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -34,3 +37,10 @@ jobs:
       with:
         name: pytest-results
         path: report.xml
+    - name: Test Report
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Pytest Results
+        path: report.xml
+        reporter: java-junit
