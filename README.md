@@ -1,3 +1,4 @@
+
 # Artificial cell generation
 
 This project attempts to emulate the [dataset comprised of white blood cells collected at the Hospital Clinic of Barcelona](https://www.sciencedirect.com/science/article/pii/S2352340920303681) using open source technologies.  
@@ -36,22 +37,54 @@ Bear in mind that this repo is still in its' early phases and was made with the 
     ```cmd
     pip install -r .\requirements\base.txt
     ```
-    These commands will install the dependencies listed in their respective requirements text files. The project is developed using Python 3.11.1, but newer versions should also work.
-3.  **Run example scripts:**
-    The example scripts are located in the `examples/` directory. 
-    - To run the single-process dataset generation script (`generate_dataset.py`), navigate to the project root directory in your terminal and execute it using Python:
-    ```bash
-    python examples/generate_dataset.py
-    ```
-    - To run the multi-process dataset generation script (`generate_dataset_multiprocess.py`), which utilizes multiple CPU cores and includes a progress bar, navigate to the project root directory in your terminal and execute it using Python:
-    ```bash
-    python examples/generate_dataset_multiprocess.py
-    ```
-4.  **Edit scripts:**
-    You can modify the example scripts in the `examples/` directory to adjust parameters like image size, number of cells, cell types, etc., according to your needs. Open the scripts in a text editor or IDE to make changes.
 
-After following these steps, you should be able to run the example scripts and generate artificial cell images.
+	Running the following command is also necessary to ensure the project is properly configured.
+	```cmd
+	pip install -e .
+	```
+    These commands will install the dependencies listed in their respective requirements text files. The project is developed using Python 3.11.1, but newer versions should also work.
+
+### Basic Usage
+
+```bash
+python examples/generate_dataset_multiprocess.py --num-images 100 --output-dir output/dataset_v1 --cell-types neutrophil monocyte
+```
+
+### Arguments
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `--output-dir` | `str` | `"output/dataset_v1"` | Directory where generated images and labels will be saved |
+| `--num-images` | `int` | `100` | Number of images to generate |
+| `--cell-types` | `list[str]` | `neutrophil monocyte` | Cell types to include. Supported values: `neutrophil`, `monocyte` |
+
+### Output Structure
+
+```
+output_dir/
+├── images/
+│   ├── image_0000.png
+│   ├── image_0001.png
+│   └── ...
+└── labels/
+    ├── image_0000.txt
+    ├── image_0001.txt
+    └── ...
+```
+
+### Label Format
+
+Labels are saved in YOLO format:
+```
+<class_id> <x_center> <y_center> <width> <height>
+```
+
+| Class ID | Cell Type |
+|----------|-----------|
+| `0` | neutrophil |
+| `1` | monocyte |
+
 
 # Contributing
 
-Contribution is welcome in any form, be it bug reports, pull requests or general knowledge and advices. If you'd like to help, but don't know how, take a peek at the issues page, I'll open issues for features I'd like to implement and refactor.
+Contribution is welcome in any form, be it bug reports, pull requests or general knowledge and advice. If you'd like to help, but don't know how, take a peek at the issues page, I'll open issues for features I'd like to implement and refactor.
