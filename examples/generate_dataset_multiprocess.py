@@ -1,3 +1,4 @@
+import argparse
 import multiprocessing
 import os
 from functools import partial
@@ -70,9 +71,10 @@ def generate_dataset(
 
 
 if __name__ == "__main__":
-    # Generate a test dataset
-    generate_dataset(
-        output_dir="output/dataset_v1",
-        num_images=100,
-        cell_types=["neutrophil", "monocyte"],
-    )
+    parser = argparse.ArgumentParser(description="Generate cell image dataset")
+    parser.add_argument("--output-dir", default="output/dataset_v1")
+    parser.add_argument("--num-images", type=int, default=100)
+    parser.add_argument("--cell-types", nargs="+", default=["neutrophil", "monocyte"])
+    args = parser.parse_args()
+
+    generate_dataset(args.output_dir, args.num_images, args.cell_types)
