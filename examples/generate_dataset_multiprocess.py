@@ -1,19 +1,22 @@
+import multiprocessing
 import os
+from functools import partial
 from pathlib import Path
-import numpy as np
-import matplotlib.pyplot as plt
 from typing import List
-from cellgen.composition.placement import CellPlacement
+
+import matplotlib.pyplot as plt
+import numpy as np
+from tqdm import tqdm
+
 from cellgen.background import BackgroundParams
 from cellgen.cells.base import CellParameters
-import multiprocessing
-from functools import partial
-from tqdm import tqdm
+from cellgen.composition.placement import CellPlacement
+
 
 def generate_single_image(i, output_path, cell_types):
     """Generate a single image with its annotation"""
     # Set a unique seed for each process based on the image index
-    np.random.seed(i + int.from_bytes(os.urandom(4), byteorder='little'))
+    np.random.seed(i + int.from_bytes(os.urandom(4), byteorder="little"))
 
     images_dir = output_path / "images"
     labels_dir = output_path / "labels"
@@ -25,10 +28,7 @@ def generate_single_image(i, output_path, cell_types):
     image, bbox = CellPlacement.generate_cell_on_background(cell_type=cell_type)
 
     # Save image
-    plt.imsave(
-        images_dir / f"image_{i:04d}.png",
-        image
-    )
+    plt.imsave(images_dir / f"image_{i:04d}.png", image)
 
     # Save annotation
     with open(labels_dir / f"image_{i:04d}.txt", "w") as f:
@@ -37,10 +37,11 @@ def generate_single_image(i, output_path, cell_types):
 
     return i  # Return something to track progress
 
+
 def generate_dataset(
     output_dir: str,
     num_images: int = 100,
-    cell_types: List[str] = ["neutrophil", "monocyte"]
+    cell_types: List[str] = ["neutrophil", "monocyte"],
 ):
     """Generate a dataset of cell images with annotations using multiprocessing."""
     # Create output directories
@@ -52,23 +53,26 @@ def generate_dataset(
     labels_dir.mkdir(parents=True, exist_ok=True)
 
     # Create a partial function with fixed arguments
-    generate_func = partial(generate_single_image,
-                          output_path=output_path,
-                          cell_types=cell_types)
+    generate_func = partial(
+        generate_single_image, output_path=output_path, cell_types=cell_types
+    )
 
     # Use multiprocessing pool with tqdm progress bar
     with multiprocessing.Pool() as pool:
-        list(tqdm(
-            pool.imap(generate_func, range(num_images)),
-            total=num_images,
-            desc="Generating images",
-            unit="image"
-        ))
+        list(
+            tqdm(
+                pool.imap(generate_func, range(num_images)),
+                total=num_images,
+                desc="Generating images",
+                unit="image",
+            )
+        )
+
 
 if __name__ == "__main__":
     # Generate a test dataset
     generate_dataset(
         output_dir="output/dataset_v1",
         num_images=100,
-        cell_types=["neutrophil", "monocyte"]
+        cell_types=["neutrophil", "monocyte"],
     )
