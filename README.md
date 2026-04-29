@@ -1,3 +1,4 @@
+
 # Artificial cell generation
 
 This project attempts to emulate the [dataset comprised of white blood cells collected at the Hospital Clinic of Barcelona](https://www.sciencedirect.com/science/article/pii/S2352340920303681) using open source technologies.  
@@ -16,11 +17,74 @@ So, what exactly is the purpose of this repository? Firstly, a proof of concept,
 Bear in mind that this repo is still in its' early phases and was made with the mentality of results first, readability second since it was a project for a master thesis. I will try to make the effort to clean up messes I've made, but no promises. In the meantime, if you want to help, scroll down to the contribute page section.
 # How to run
 
-Install all the dependencies from requirements.txt file in the repository. I **highly** recommend usage of *virtual enviroments* to have a clean install. The Python version used in the project is 3.11.1, but newer Python version *should* be fine since this project mainly relies on numpy and OpenCV.  
-After that, run the gen_blob.py script and that's it. Edit the script to your preferences or needs.
+1.  **Set up a virtual environment (recommended):**
+    It is highly recommended to use a virtual environment to isolate project dependencies. If you don't have `virtualenv` installed, you can install it using pip:
+    ```bash
+    pip install virtualenv
+    ```
+    Then, create and activate a virtual environment in the project directory:
+    ```bash
+    virtualenv venv
+    venv\Scripts\activate  # On Windows
+    # source venv/bin/activate # On Linux/macOS
+    ```
+2.  **Install dependencies:**
+    Install the required Python packages for development using `dev.txt`. Navigate to the project root directory in your terminal and run:
+    ```cmd
+    pip install -r .\requirements\dev.txt
+    ```
+    or if you prefer to install only the base packages
+    ```cmd
+    pip install -r .\requirements\base.txt
+    ```
+
+	Running the following command is also necessary to ensure the project is properly configured.
+	```cmd
+	pip install -e .
+	```
+    These commands will install the dependencies listed in their respective requirements text files. The project is developed using Python 3.11.1, but newer versions should also work.
+
+### Basic Usage
+
+```bash
+python examples/generate_dataset_multiprocess.py --num-images 100 --output-dir output/dataset_v1 --cell-types neutrophil monocyte
+```
+
+### Arguments
+
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `--output-dir` | `str` | `"output/dataset_v1"` | Directory where generated images and labels will be saved |
+| `--num-images` | `int` | `100` | Number of images to generate |
+| `--cell-types` | `list[str]` | `neutrophil monocyte` | Cell types to include. Supported values: `neutrophil`, `monocyte` |
+
+### Output Structure
+
+```
+output_dir/
+├── images/
+│   ├── image_0000.png
+│   ├── image_0001.png
+│   └── ...
+└── labels/
+    ├── image_0000.txt
+    ├── image_0001.txt
+    └── ...
+```
+
+### Label Format
+
+Labels are saved in YOLO format:
+```
+<class_id> <x_center> <y_center> <width> <height>
+```
+
+| Class ID | Cell Type |
+|----------|-----------|
+| `0` | neutrophil |
+| `1` | monocyte |
+
 
 # Contributing
 
-Contribution is welcome in any form, be it bug reports, pull requests or general knowledge and advices. If you'd like to help, but don't know how, take a peek at the issues page, I'll open issues for features I'd like to implement and refactor.
-
-
+Contribution is welcome in any form, be it bug reports, pull requests or general knowledge and advice. If you'd like to help, but don't know how, take a peek at the issues page, I'll open issues for features I'd like to implement and refactor.
